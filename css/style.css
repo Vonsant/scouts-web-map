@@ -696,6 +696,11 @@ select optgroup {
   color: var(--fg);
 }
 
+#raceBox, #terrainBox, #resBox {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+
 /* ===== Accordion Styles ===== */
 #filters .blk .hdrline {
   cursor: pointer;
