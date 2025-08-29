@@ -169,6 +169,9 @@ header h1{
   overflow-x:hidden;
   height:calc(100vh - 112px);
   min-height:0;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
 }
 
 /* Force visible scrollbar for filters to test */
@@ -682,12 +685,6 @@ svg text{
   background:linear-gradient(135deg, rgba(0,212,255,.1) 0%, rgba(0,153,204,.05) 100%);
 }
 
-.results-list-container {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
 .result .chipsRow {
   max-height: 105px;
   overflow-y: auto;
@@ -790,11 +787,4 @@ label:has(#ratioSim) input[type=range] {
 #filters .blk.active {
   background:linear-gradient(135deg, rgba(38,45,65,.9) 0%, rgba(25,30,45,.8) 100%);
   box-shadow: 0 0 25px rgba(0,212,255,.2);
-}
-
-/* Make the planet list in the details view scrollable */
-#planet-details-block .grid {
-  max-height: 450px;
-  overflow-y: auto;
-  padding-right: 8px;
 }

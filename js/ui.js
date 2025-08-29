@@ -70,7 +70,6 @@ export function renderSystemDetails(s, highlightPlanetIds) {
   if (s.planets && s.planets.length > 0) {
     const blkPl = document.createElement('div');
     blkPl.className = 'blk';
-    blkPl.id = 'planet-details-block'; // Add ID for styling
     blkPl.innerHTML = `<div class="hdrline"><h3>Планеты</h3></div>`;
     const plGrid = document.createElement('div');
     plGrid.className = 'grid';
@@ -217,41 +216,30 @@ export function renderSystemDetails(s, highlightPlanetIds) {
 
 export function renderSummaryList(entries) {
   const wrap = d3.select('#details');
-  wrap.html(''); // Clear existing content
-
-  // Create a dedicated container for the list to ensure proper layout and scrolling
-  const container = document.createElement('div');
-  container.className = 'results-list-container';
-  wrap.node().appendChild(container);
-
+  wrap.html('');
   const title = document.createElement('div');
   title.className = 'small muted';
-  title.style.marginBottom = '8px'; // Add some space below the count
   title.textContent = `Найдено систем: ${entries.length}`;
-  container.appendChild(title);
+  wrap.node().appendChild(title);
 
   entries.forEach(({ system: s, reasons, highlightPlanetIds }) => {
     const card = document.createElement('div');
     card.className = 'card result';
     card.onclick = () => selectSystem(s.id, highlightPlanetIds || []);
-
     const title = document.createElement('div');
     title.className = 'sysTitle';
     title.textContent = s.name || s.id;
     card.appendChild(title);
-
     const sub = document.createElement('div');
     sub.className = 'sysSub';
     sub.textContent = `Планет: ${(s.planets || []).length} • Станций: ${(s.stations || []).length} • Поясов: ${(s.asteroidBelts || []).length}`;
     card.appendChild(sub);
-
     if (reasons && reasons.length) {
       const why = document.createElement('div');
       why.className = 'small muted';
       why.textContent = reasons.join(' • ');
       card.appendChild(why);
     }
-
     if (highlightPlanetIds && highlightPlanetIds.length) {
       const chips = document.createElement('div');
       chips.className = 'chipsRow';
@@ -264,7 +252,7 @@ export function renderSummaryList(entries) {
       });
       card.appendChild(chips);
     }
-    container.appendChild(card); // Append card to the new container
+    wrap.node().appendChild(card);
   });
 }
 
