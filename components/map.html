@@ -1,0 +1,16 @@
+<canvas id="stars"></canvas>
+<svg id="map" viewBox="0 0 1200 900" preserveAspectRatio="xMidYMid meet" aria-label="Карта"></svg>
+
+<div class="toolbar" role="group" aria-label="Инструменты карты">
+  <button id="zoomIn" title="Приблизить">➕</button>
+  <button id="zoomOut" title="Отдалить">➖</button>
+  <button id="zoomReset" class="ghost" title="Сброс масштаба">100%</button>
+  <label class="toolchk"><input type="checkbox" id="toggleLabels" checked> Подписи</label>
+  <label class="toolchk"><input type="checkbox" id="togglePoints" checked> Точки</label>
+  <div class="label-size-control">
+	<label for="labelSize">Размер подписей</label>
+	<input type="range" id="labelSize" min="8" max="24" value="12" step="1" />
+  </div>
+</div>
+
+<div class="tooltip" id="tip"></div>
