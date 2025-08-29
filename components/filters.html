@@ -33,16 +33,23 @@
       <div class="grid">
         <label>Название <input id="plName" type="search" placeholder="например, Ниодолла" /></label>
         <div>
-          <div class="small muted" style="margin-bottom:8px;">Расы — найдёт планеты с любой из выбранных</div>
-          <div id="raceBox" class="tagRow"></div>
-        </div>
-        <div>
           <div class="row" style="gap:8px;margin-top:8px">
             <label>Уровень от <input id="plLvlMin" type="number" min="1" max="99" step="1" style="width:90px" /></label>
             <label>до <input id="plLvlMax" type="number" min="1" max="99" step="1" style="width:90px" /></label>
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- RACES -->
+  <div class="blk" id="filter-block-races">
+    <div class="hdrline">
+      <h3>Расы</h3>
+    </div>
+    <div class="collapsible-content">
+      <div class="small muted" style="margin-bottom:8px;">Найдёт системы, где раса соответствует другим выбранным фильтрам (Планеты, Станции и т.д.)</div>
+      <div id="raceBox" class="tagRow"></div>
     </div>
   </div>
 
