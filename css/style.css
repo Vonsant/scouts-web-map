@@ -682,6 +682,12 @@ svg text{
   background:linear-gradient(135deg, rgba(0,212,255,.1) 0%, rgba(0,153,204,.05) 100%);
 }
 
+.results-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .result .chipsRow {
   max-height: 105px;
   overflow-y: auto;
@@ -724,12 +730,23 @@ select optgroup {
 }
 
 #filter-block-inhabitable .small.muted {
-  font-size: 13px;
-  line-height: 1.3;
+  font-size: 12px;
+  line-height: 1.25;
 }
 
 label:has(#ratioSim) {
-  font-size: 14px;
+  font-size: 13px;
+}
+
+/* Tighter chips for the uninhabitable filter */
+#filter-block-inhabitable .tagRow .chip {
+  padding: 5px 8px;
+  font-size: 12px;
+}
+
+#filter-block-inhabitable .chipsRow .chip {
+  padding: 4px 8px;
+  font-size: 12px;
 }
 
 /* Ensure checkbox groups use a grid layout */
@@ -738,7 +755,7 @@ label:has(#ratioSim) {
 #filters #resBox {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
+  gap: 6px;
 }
 
 /* ===== Accordion Styles ===== */
