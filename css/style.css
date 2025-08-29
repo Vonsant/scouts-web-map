@@ -695,3 +695,29 @@ select optgroup {
   background-color: var(--panel-solid);
   color: var(--fg);
 }
+
+/* ===== Accordion Styles ===== */
+#filters .blk .hdrline {
+  cursor: pointer;
+  transition: background-color .3s;
+}
+
+#filters .blk .collapsible-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s ease-out, padding 0.5s ease-out;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+#filters .blk.active > .collapsible-content {
+  max-height: 1000px; /* Large enough to fit any content */
+  overflow: visible;
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+
+#filters .blk.active {
+  background:linear-gradient(135deg, rgba(38,45,65,.9) 0%, rgba(25,30,45,.8) 100%);
+  box-shadow: 0 0 25px rgba(0,212,255,.2);
+}

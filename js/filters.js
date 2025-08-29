@@ -5,29 +5,24 @@ import { clearHighlight } from './map.js';
 import { updateHash } from './app.js';
 
 function getFilters() {
-  const useGalaxy = document.getElementById('useGalaxy').checked;
-  const useSystem = document.getElementById('useSystem').checked;
-  const usePlanets = document.getElementById('usePlanets').checked;
-  const useStations = document.getElementById('useStations').checked;
-  const useInhabitable = document.getElementById('useInhabitable').checked;
+  const useGalaxy = document.getElementById('filter-block-galaxy').classList.contains('active');
+  const useSystem = document.getElementById('filter-block-system').classList.contains('active');
+  const usePlanets = document.getElementById('filter-block-planets').classList.contains('active');
+  const useStations = document.getElementById('filter-block-stations').classList.contains('active');
+  const useInhabitable = document.getElementById('filter-block-inhabitable').classList.contains('active');
 
   const galaxyId = document.getElementById('galaxyFilter').value;
-
   const sysName = document.getElementById('sysName').value.trim();
   const hasBelt = document.getElementById('hasBelt').checked;
-
   const plName = document.getElementById('plName').value.trim();
   const plLvlMin = parseInt(document.getElementById('plLvlMin').value || '');
   const plLvlMax = parseInt(document.getElementById('plLvlMax').value || '');
-
   const stType = document.getElementById('stType').value;
   const stName = document.getElementById('stName').value.trim();
   const stLvlMin = parseInt(document.getElementById('stLvlMin').value || '');
   const stLvlMax = parseInt(document.getElementById('stLvlMax').value || '');
-
   const terrainChecked = Array.from(document.querySelectorAll('#terrainBox input[type="checkbox"]:checked')).map(el => el.value);
   const resChecked = Array.from(document.querySelectorAll('#resBox input[type="checkbox"]:checked')).map(el => el.value.toLowerCase());
-
   const ratioSim = parseInt(document.getElementById('ratioSim').value, 10);
   const ratio = STATE.ratio;
 
@@ -172,7 +167,8 @@ export function runSearch() {
 }
 
 export function clearSearch() {
-  ['useGalaxy', 'useSystem', 'usePlanets', 'useStations', 'useInhabitable'].forEach(id => document.getElementById(id).checked = false);
+  document.querySelectorAll('#filters .blk.active').forEach(el => el.classList.remove('active'));
+
   document.getElementById('galaxyFilter').value = '';
   ['sysName', 'plName', 'plLvlMin', 'plLvlMax', 'stName', 'stLvlMin', 'stLvlMax'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('hasBelt').checked = false;
@@ -192,6 +188,13 @@ export function clearSearch() {
 export function initFilters() {
     document.getElementById('runSearch').addEventListener('click', runSearch);
     document.getElementById('clearSearch').addEventListener('click', clearSearch);
+
+    // Accordion logic
+    document.querySelectorAll('#filters .blk .hdrline').forEach(header => {
+      header.addEventListener('click', () => {
+        header.parentElement.classList.toggle('active');
+      });
+    });
 
     const a = document.getElementById('splitA'),
           b = document.getElementById('splitB');

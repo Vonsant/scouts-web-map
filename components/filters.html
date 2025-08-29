@@ -1,103 +1,108 @@
 <div id="filters-inner">
-<!-- GALAXY FILTER -->
-<div class="blk">
-  <div class="hdrline">
-	<h3>Галактика</h3>
-	<label class="small muted"><input id="useGalaxy" type="checkbox" /> Использовать в поиске</label>
+  <!-- GALAXY FILTER -->
+  <div class="blk" id="filter-block-galaxy">
+    <div class="hdrline">
+      <h3>Галактика</h3>
+    </div>
+    <div class="collapsible-content">
+      <label>Выбор галактики
+        <select id="galaxyFilter"><option value="">Любая</option></select>
+      </label>
+    </div>
   </div>
-  <label>Выбор галактики
-	<select id="galaxyFilter"><option value="">Любая</option></select>
-  </label>
-</div>
 
-<!-- SYSTEM FILTER -->
-<div class="blk">
-  <div class="hdrline">
-	<h3>Система</h3>
-	<label class="small muted"><input id="useSystem" type="checkbox" /> Использовать в поиске</label>
+  <!-- SYSTEM FILTER -->
+  <div class="blk" id="filter-block-system">
+    <div class="hdrline">
+      <h3>Система</h3>
+    </div>
+    <div class="collapsible-content">
+      <div class="grid">
+        <label>Название системы <input id="sysName" type="search" placeholder="например, Урсула" /></label>
+        <label class="chip"><input id="hasBelt" type="checkbox" /> Есть астероидный пояс</label>
+      </div>
+    </div>
   </div>
-  <div class="grid">
-	<label>Название системы <input id="sysName" type="search" placeholder="например, Урсула" /></label>
-	<label class="chip"><input id="hasBelt" type="checkbox" /> Есть астероидный пояс</label>
-  </div>
-</div>
 
-<!-- PLANETS GENERIC -->
-<div class="blk">
-  <div class="hdrline">
-	<h3>Планеты (общее)</h3>
-	<label class="small muted"><input id="usePlanets" type="checkbox" /> Использовать в поиске</label>
+  <!-- PLANETS GENERIC -->
+  <div class="blk" id="filter-block-planets">
+    <div class="hdrline">
+      <h3>Планеты (общее)</h3>
+    </div>
+    <div class="collapsible-content">
+      <div class="grid">
+        <label>Название <input id="plName" type="search" placeholder="например, Ниодолла" /></label>
+        <div>
+          <div class="row" style="gap:8px;margin-top:8px">
+            <label>Уровень от <input id="plLvlMin" type="number" min="1" max="99" step="1" style="width:90px" /></label>
+            <label>до <input id="plLvlMax" type="number" min="1" max="99" step="1" style="width:90px" /></label>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
-  <div class="grid">
-	<label>Название <input id="plName" type="search" placeholder="например, Ниодолла" /></label>
-	<div>
-	  <div class="row" style="gap:8px;margin-top:8px">
-		<label>Уровень от <input id="plLvlMin" type="number" min="1" max="99" step="1" style="width:90px" /></label>
-		<label>до <input id="plLvlMax" type="number" min="1" max="99" step="1" style="width:90px" /></label>
-	  </div>
-	</div>
-  </div>
-</div>
 
-<!-- STATIONS -->
-<div class="blk">
-  <div class="hdrline">
-	<h3>Станции</h3>
-	<label class="small muted"><input id="useStations" type="checkbox" /> Использовать в поиске</label>
+  <!-- STATIONS -->
+  <div class="blk" id="filter-block-stations">
+    <div class="hdrline">
+      <h3>Станции</h3>
+    </div>
+    <div class="collapsible-content">
+      <div class="grid">
+        <label>Тип станции
+          <select id="stType"><option value="">Любой</option></select>
+        </label>
+        <label>Название <input id="stName" type="search" placeholder="имя станции" /></label>
+        <div class="row" style="gap:8px;">
+          <label>Уровень от <input id="stLvlMin" type="number" min="1" max="99" step="1" style="width:90px" /></label>
+          <label>до <input id="stLvlMax" type="number" min="1" max="99" step="1" style="width:90px" /></label>
+        </div>
+      </div>
+    </div>
   </div>
-  <div class="grid">
-	<label>Тип станции
-	  <select id="stType"><option value="">Любой</option></select>
-	</label>
-	<label>Название <input id="stName" type="search" placeholder="имя станции" /></label>
-	<div class="row" style="gap:8px;">
-	  <label>Уровень от <input id="stLvlMin" type="number" min="1" max="99" step="1" style="width:90px" /></label>
-	  <label>до <input id="stLvlMax" type="number" min="1" max="99" step="1" style="width:90px" /></label>
-	</div>
-  </div>
-</div>
 
-<!-- INHABITABLE -->
-<div class="blk">
-  <div class="hdrline">
-	<h3>Необитаемые планеты</h3>
-	<label class="small muted"><input id="useInhabitable" type="checkbox" /> Использовать в поиске</label>
-  </div>
-  <div class="grid">
-	<div>
-	  <div class="small muted" style="margin-bottom:8px;">Типы рельефа — найдёт планеты с любым из выбранных</div>
-	  <div id="terrainBox" class="tagRow"></div>
-	</div>
+  <!-- INHABITABLE -->
+  <div class="blk" id="filter-block-inhabitable">
+    <div class="hdrline">
+      <h3>Необитаемые планеты</h3>
+    </div>
+    <div class="collapsible-content">
+      <div class="grid">
+        <div>
+          <div class="small muted" style="margin-bottom:8px;">Типы рельефа — найдёт планеты с любым из выбранных</div>
+          <div id="terrainBox" class="tagRow"></div>
+        </div>
 
-	<div>
-	  <div class="small muted" style="margin-bottom:8px;">Добываемые ресурсы — <b>все выбранные</b> должны быть на <b>одной</b> планете</div>
-	  <div id="resBox" class="tagRow"></div>
-	</div>
+        <div>
+          <div class="small muted" style="margin-bottom:8px;">Добываемые ресурсы — <b>все выбранные</b> должны быть на <b>одной</b> планете</div>
+          <div id="resBox" class="tagRow"></div>
+        </div>
 
-	<div class="grid">
-	  <div class="small muted">Соотношение <span class="kbd">Горы : Океаны : Равнины</span></div>
-	  <div class="double-slider">
-		<div class="track">
-		  <div id="rangeFill" class="fill" style="left:33%; right:34%;"></div>
-		</div>
-		<input id="splitA" type="range" min="0" max="100" step="1" value="33" />
-		<input id="splitB" type="range" min="0" max="100" step="1" value="66" />
-	  </div>
-	  <div class="chipsRow">
-		<span class="chip">Горы: <span id="ratioH">33</span>%</span>
-		<span class="chip">Океаны: <span id="ratioO">33</span>%</span>
-		<span class="chip">Равнины: <span id="ratioP">34</span>%</span>
-	  </div>
-	  <label>Строгость поиска (0–100%): <input id="ratioSim" type="range" min="0" max="100" step="1" value="0" /> <span id="ratioSimVal">0</span>%</label>
-	  <div class="small muted">Если строгость = 0%, фильтр не применяется.</div>
-	</div>
+        <div class="grid">
+          <div class="small muted">Соотношение <span class="kbd">Горы : Океаны : Равнины</span></div>
+          <div class="double-slider">
+            <div class="track">
+              <div id="rangeFill" class="fill" style="left:33%; right:34%;"></div>
+            </div>
+            <input id="splitA" type="range" min="0" max="100" step="1" value="33" />
+            <input id="splitB" type="range" min="0" max="100" step="1" value="66" />
+          </div>
+          <div class="chipsRow">
+            <span class="chip">Горы: <span id="ratioH">33</span>%</span>
+            <span class="chip">Океаны: <span id="ratioO">33</span>%</span>
+            <span class="chip">Равнины: <span id="ratioP">34</span>%</span>
+          </div>
+          <label>Строгость поиска (0–100%): <input id="ratioSim" type="range" min="0" max="100" step="1" value="0" /> <span id="ratioSimVal">0</span>%</label>
+          <div class="small muted">Если строгость = 0%, фильтр не применяется.</div>
+        </div>
+      </div>
+    </div>
   </div>
-</div>
 
-<div class="blk">
-  <div class="row" style="justify-content: space-between;">
-	<button id="runSearch" class="primary">Найти</button>
-	<button id="clearSearch" class="ghost">Сброс</button>
+  <div class="blk">
+    <div class="row" style="justify-content: space-between;">
+      <button id="runSearch" class="primary">Найти</button>
+      <button id="clearSearch" class="ghost">Сброс</button>
+    </div>
   </div>
-</div>
 </div>
