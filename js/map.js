@@ -1,5 +1,6 @@
 import { STATE, VIZ } from './state.js';
 import { selectSystem } from './ui.js';
+import * as i18n from './localization.js';
 
 // Module-level variables for SVG elements
 let svg, gRoot, gCells, gEdges, gPoints, gLabels, tip, zoom;
@@ -204,16 +205,33 @@ function showTip(event, s) {
   const belts = s.asteroidBelts || [];
   const maxItems = 5;
 
-  let content = `<div style="font-weight: bold; font-size: 18px; color: var(--accent);">${s.name || s.id}</div>`;
-  content += `<div class="small muted" style="margin-bottom: 8px;">Тип: ${s.type || '—'}</div>`;
+  let content = `<div style="font-weight: bold; font-size: 18px; color: var(--accent); margin-bottom: 8px;">${s.name || s.id}</div>`;
 
-  if (planets.length > 0) {
+  const habitablePlanets = planets.filter(p => p.category === 'habitable');
+  if (habitablePlanets.length > 0) {
     content += '<h4>Планеты</h4><ul>';
-    planets.slice(0, maxItems).forEach(p => {
-      content += `<li>${p.name || p.id}</li>`;
+    habitablePlanets.slice(0, maxItems).forEach(p => {
+      const race = i18n.translate(i18n.races, p.race);
+      const level = p.level || '?';
+      content += `<li>${p.name || p.id} - ${race} - ${level} ур.</li>`;
     });
-    if (planets.length > maxItems) {
-      content += `<li>... и еще ${planets.length - maxItems}</li>`;
+    if (habitablePlanets.length > maxItems) {
+      content += `<li>... и еще ${habitablePlanets.length - maxItems}</li>`;
+    }
+    content += '</ul>';
+  }
+
+  const inhabitablePlanets = planets.filter(p => p.category === 'inhabitable');
+    if (inhabitablePlanets.length > 0) {
+    if (habitablePlanets.length === 0) content += '<h4>Планеты</h4>';
+    content += '<ul>';
+    inhabitablePlanets.slice(0, maxItems).forEach(p => {
+        const terrain = i18n.translate(i18n.terrains, p.terrain);
+        const ratios = `г:${p.hills || 0} о:${p.oceans || 0} р:${p.plains || 0}`;
+        content += `<li>${terrain} - ${p.name || p.id} - ${ratios}</li>`;
+    });
+    if (inhabitablePlanets.length > maxItems) {
+        content += `<li>... и еще ${inhabitablePlanets.length - maxItems} необитаемых</li>`;
     }
     content += '</ul>';
   }
@@ -221,7 +239,10 @@ function showTip(event, s) {
   if (stations.length > 0) {
     content += '<h4>Станции</h4><ul>';
     stations.slice(0, maxItems).forEach(st => {
-      content += `<li>${st.name || st.id}</li>`;
+      const type = i18n.translate(i18n.stationTypes, st.type);
+      const race = i18n.translate(i18n.races, st.race);
+      const level = st.level || '?';
+      content += `<li>${type} - ${st.name || st.id} - ${race} - ${level} ур.</li>`;
     });
     if (stations.length > maxItems) {
       content += `<li>... и еще ${stations.length - maxItems}</li>`;
