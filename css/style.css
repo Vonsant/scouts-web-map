@@ -176,6 +176,7 @@ header h1{
   flex-direction:column;
   gap:12px;
   z-index: 2;
+  transform: translateZ(0);
 }
 
 /* Force visible scrollbar for filters to test */
