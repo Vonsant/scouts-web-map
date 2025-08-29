@@ -1,10 +1,19 @@
-import { STATE, VIZ, svg, gRoot, gCells, gEdges, gPoints, gLabels, tip } from './state.js';
+import { STATE, VIZ } from './state.js';
 import { selectSystem } from './ui.js';
-import { updateHash } from './app.js';
 
-let zoom;
+// Module-level variables for SVG elements
+let svg, gRoot, gCells, gEdges, gPoints, gLabels, tip, zoom;
 
 export function initMap() {
+  // Initialize selections now that the DOM is ready
+  svg = d3.select('#map');
+  gRoot = svg.append('g').attr('id', 'root');
+  gCells = gRoot.append('g').attr('id', 'cells');
+  gEdges = gRoot.append('g').attr('id', 'edges').attr('class', 'edges');
+  gPoints = gRoot.append('g').attr('id', 'points');
+  gLabels = gRoot.append('g').attr('id', 'labels');
+  tip = d3.select('#tip');
+
   zoom = d3.zoom().scaleExtent([0.5, 4]).on('zoom', (ev) => {
     gRoot.attr('transform', ev.transform);
   });
@@ -36,6 +45,8 @@ export function initMap() {
 
 export function initStars() {
   const cvs = document.getElementById('stars');
+  // Check if canvas exists, it might not if component hasn't loaded
+  if (!cvs) return;
   const ctx = cvs.getContext('2d');
   const DPR = window.devicePixelRatio || 1;
   const stars = [];
@@ -55,6 +66,7 @@ export function initStars() {
   }
 
   function draw() {
+    if (!cvs.isConnected) return; // Stop drawing if canvas is removed
     const w = cvs.clientWidth, h = cvs.clientHeight;
     cvs.width = Math.floor(w * DPR);
     cvs.height = Math.floor(h * DPR);
@@ -84,7 +96,10 @@ export function initStars() {
     requestAnimationFrame(draw);
   }
 
-  new ResizeObserver(() => { generateStars(cvs.clientWidth, cvs.clientHeight); }).observe(cvs);
+  new ResizeObserver(() => {
+    if (cvs.isConnected) generateStars(cvs.clientWidth, cvs.clientHeight);
+  }).observe(cvs);
+
   draw();
 }
 

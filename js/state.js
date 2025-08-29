@@ -24,11 +24,3 @@ export let VIZ = {
   delaunay: null,
   voronoi: null
 };
-
-export const svg = d3.select('#map');
-export const gRoot = svg.append('g').attr('id', 'root');
-export const gCells = gRoot.append('g').attr('id', 'cells');
-export const gEdges = gRoot.append('g').attr('id', 'edges').attr('class', 'edges');
-export const gPoints = gRoot.append('g').attr('id', 'points');
-export const gLabels = gRoot.append('g').attr('id', 'labels');
-export const tip = d3.select('#tip');
