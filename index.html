@@ -692,6 +692,16 @@
     ::-webkit-scrollbar-track{background:rgba(10,15,30,.3); border-radius:5px;}
     ::-webkit-scrollbar-thumb{background:linear-gradient(135deg, rgba(0,212,255,.3) 0%, rgba(131,102,255,.3) 100%); border-radius:5px;}
     ::-webkit-scrollbar-thumb:hover{background:linear-gradient(135deg, rgba(0,212,255,.5) 0%, rgba(131,102,255,.5) 100%);}
+    
+    /* Darker */
+    :root { color-scheme: dark; }
+    
+    select,
+    select option,
+    select optgroup {
+      background-color: var(--panel-solid);
+      color: var(--fg);
+    }
   </style>
 </head>
 <body>
@@ -795,7 +805,7 @@
           </div>
 
           <div class="grid">
-            <div class="small muted">Соотношение <span class="kbd">Холмы : Океаны : Равнины</span></div>
+            <div class="small muted">Соотношение <span class="kbd">Горы : Океаны : Равнины</span></div>
             <div class="double-slider">
               <div class="track">
                 <div id="rangeFill" class="fill" style="left:33%; right:34%;"></div>
@@ -804,12 +814,12 @@
               <input id="splitB" type="range" min="0" max="100" step="1" value="66" />
             </div>
             <div class="chipsRow">
-              <span class="chip">Холмы: <span id="ratioH">33</span>%</span>
+              <span class="chip">Горы: <span id="ratioH">33</span>%</span>
               <span class="chip">Океаны: <span id="ratioO">33</span>%</span>
               <span class="chip">Равнины: <span id="ratioP">34</span>%</span>
             </div>
-            <label>Допуск по соотношению (0–100): <input id="ratioSim" type="range" min="0" max="100" step="1" value="0" /> <span id="ratioSimVal">0</span>%</label>
-            <div class="small muted">Если допуск = 0%, фильтр по соотношению не применяется.</div>
+            <label>Строгость поиска (0–100%): <input id="ratioSim" type="range" min="0" max="100" step="1" value="0" /> <span id="ratioSimVal">0</span>%</label>
+            <div class="small muted">Если строгость = 0%, фильтр не применяется.</div>
           </div>
         </div>
       </div>
@@ -1314,7 +1324,7 @@ function renderSystemDetails(s, highlightPlanetIds){
       .forEach(([k,v])=>{const kEl=document.createElement('div');kEl.className='k';kEl.textContent=k;const vEl=document.createElement('div');vEl.className='v';vEl.textContent=v;kvp.appendChild(kEl);kvp.appendChild(vEl);});
       card.appendChild(kvp);
     }else{
-      [['Рельеф',p.terrain||'—'],['Холмы',p.hills||'—'],['Океаны',p.oceans||'—'],['Равнины',p.plains||'—']]
+      [['Рельеф',p.terrain||'—'],['Горы',p.hills||'—'],['Океаны',p.oceans||'—'],['Равнины',p.plains||'—']]
       .forEach(([k,v])=>{const kEl=document.createElement('div');kEl.className='k';kEl.textContent=k;const vEl=document.createElement('div');vEl.className='v';vEl.textContent=v;kvp.appendChild(kEl);kvp.appendChild(vEl);});
       card.appendChild(kvp);
     }
