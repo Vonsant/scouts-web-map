@@ -96,7 +96,7 @@ header h1{
   border-radius:999px;
   border:1px solid rgba(42,53,85,.5);
   background:linear-gradient(135deg, rgba(26,35,64,.7) 0%, rgba(18,25,45,.7) 100%);
-  font-size:18px;
+  font-size:14px;
   color:var(--muted);
   backdrop-filter: blur(10px);
   transition: all .3s;
@@ -111,7 +111,7 @@ header h1{
 
 #content{
   display:grid;
-  grid-template-columns:600px 1fr 600px;
+  grid-template-columns:400px 1fr 400px;
   gap:20px;
   padding:20px;
   height:calc(100vh - 72px);
@@ -204,7 +204,7 @@ header h1{
 
 .blk h3{
   margin:0 0 4px 0;
-  font-size:22px;
+  font-size:16px;
   font-weight:600;
   letter-spacing:.5px;
   color:#ffffff;
@@ -227,7 +227,7 @@ header h1{
   transition: all .3s;
 }
 
-.small{font-size:18px}
+.small{font-size:14px}
 .muted{color:var(--muted);opacity:.85;}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .grid{display:grid;gap:12px}
@@ -243,7 +243,7 @@ header h1{
   padding:10px 14px;
   transition: all .2s ease;
   accent-color: var(--accent);
-  font-size:20px;
+  font-size:15px;
 }
 
 select, input[type="search"], input[type="number"]{width:100%}
@@ -304,7 +304,7 @@ button.ghost:hover{
   background:linear-gradient(135deg, rgba(26,35,64,.8) 0%, rgba(20,28,50,.7) 100%);
   border:1px solid rgba(42,53,85,.5);
   border-radius:999px;
-  font-size:18px;
+  font-size:14px;
   transition: all .2s;
   cursor:pointer;
   user-select:none;
@@ -389,7 +389,7 @@ button.ghost:hover{
 .sysTitle{
   font-weight:700;
   margin:0;
-  font-size:28px;
+  font-size:20px;
   letter-spacing:-.5px;
   background: linear-gradient(135deg, #ffffff 0%, #00d4ff 100%);
   -webkit-background-clip: text;
@@ -399,12 +399,12 @@ button.ghost:hover{
 
 .sysSub{
   margin:8px 0 12px 0;
-  font-size:20px;
+  font-size:15px;
   color:var(--muted);
   opacity:.9;
 }
 
-.kv{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;font-size:20px}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;font-size:15px}
 .kv .k{color:var(--muted);opacity:.8}
 .kv .v{color:var(--fg);font-weight:500}
 
@@ -591,7 +591,7 @@ button.ghost:hover{
 /* Enhanced SVG styling */
 svg text{
   fill:var(--fg);
-  font-size:18px;
+  font-size:14px;
   font-weight:500;
   paint-order:stroke;
   stroke:#000;
