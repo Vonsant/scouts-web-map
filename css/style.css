@@ -483,7 +483,6 @@ button.ghost:hover{
 .tooltip{
   position:absolute;
   pointer-events:none;
-  transform: translate(-50%, calc(-100% - 10px));
   background:linear-gradient(135deg, rgba(10,15,30,.98) 0%, rgba(5,8,20,.95) 100%);
   border:1px solid rgba(0,212,255,.3);
   border-radius:12px;

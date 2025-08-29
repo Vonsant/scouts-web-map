@@ -254,10 +254,14 @@ function showTip(event, s) {
     content += '<div style="margin-top: 8px; font-style: italic;" class="small muted">Есть астероидный пояс</div>';
   }
 
-  tip.style('display', 'block')
-    .style('left', (event.clientX) + 'px')
-    .style('top', (event.clientY) + 'px')
-    .html(content);
+  // Manual positioning logic
+  tip.html(content).style('display', 'block');
+  const tooltipNode = tip.node();
+  const tooltipWidth = tooltipNode.offsetWidth;
+  const tooltipHeight = tooltipNode.offsetHeight;
+
+  tip.style('left', (event.clientX - tooltipWidth / 2) + 'px')
+     .style('top', (event.clientY - tooltipHeight - 15) + 'px'); // 15px margin above cursor
 }
 
 function hideTip() {
