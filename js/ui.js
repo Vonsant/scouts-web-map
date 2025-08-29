@@ -243,19 +243,13 @@ export function renderSummaryList(entries) {
     if (highlightPlanetIds && highlightPlanetIds.length) {
       const chips = document.createElement('div');
       chips.className = 'chipsRow';
-      const names = highlightPlanetIds.slice(0, 4).map(pid => getPlanetName(s, pid));
+      const names = highlightPlanetIds.map(pid => getPlanetName(s, pid));
       names.forEach(n => {
         const chip = document.createElement('span');
         chip.className = 'chip';
         chip.textContent = n;
         chips.appendChild(chip);
       });
-      if (highlightPlanetIds.length > 4) {
-        const more = document.createElement('span');
-        more.className = 'chip';
-        more.textContent = `… и ещё ${highlightPlanetIds.length - 4}`;
-        chips.appendChild(more);
-      }
       card.appendChild(chips);
     }
     wrap.node().appendChild(card);
