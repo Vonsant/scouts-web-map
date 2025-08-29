@@ -164,6 +164,7 @@ header h1{
   flex-direction:column;
   gap:14px;
   z-index: 2;
+  will-change: transform;
 }
 
 #details{
@@ -177,6 +178,7 @@ header h1{
   gap:12px;
   z-index: 2;
   transform: translateZ(0);
+  will-change: transform;
 }
 
 /* Force visible scrollbar for filters to test */
