@@ -199,14 +199,44 @@ export function showGalaxy(galaxyId, callback) {
 }
 
 function showTip(event, s) {
-  const planets = (s.planets || []).length,
-        stations = (s.stations || []).length,
-        belts = (s.asteroidBelts || []).length;
+  const planets = s.planets || [];
+  const stations = s.stations || [];
+  const belts = s.asteroidBelts || [];
+  const maxItems = 5;
+
+  let content = `<div style="font-weight: bold; font-size: 18px; color: var(--accent);">${s.name || s.id}</div>`;
+  content += `<div class="small muted" style="margin-bottom: 8px;">Тип: ${s.type || '—'}</div>`;
+
+  if (planets.length > 0) {
+    content += '<h4>Планеты</h4><ul>';
+    planets.slice(0, maxItems).forEach(p => {
+      content += `<li>${p.name || p.id}</li>`;
+    });
+    if (planets.length > maxItems) {
+      content += `<li>... и еще ${planets.length - maxItems}</li>`;
+    }
+    content += '</ul>';
+  }
+
+  if (stations.length > 0) {
+    content += '<h4>Станции</h4><ul>';
+    stations.slice(0, maxItems).forEach(st => {
+      content += `<li>${st.name || st.id}</li>`;
+    });
+    if (stations.length > maxItems) {
+      content += `<li>... и еще ${stations.length - maxItems}</li>`;
+    }
+    content += '</ul>';
+  }
+
+  if (belts.length > 0) {
+    content += '<div style="margin-top: 8px; font-style: italic;" class="small muted">Есть астероидный пояс</div>';
+  }
+
   tip.style('display', 'block')
     .style('left', (event.clientX) + 'px')
     .style('top', (event.clientY) + 'px')
-    .html(`<div><strong style="color:var(--accent)">${s.name || s.id}</strong></div>
-           <div class="small muted">Планет: ${planets} • Станций: ${stations} • Поясов: ${belts}</div>`);
+    .html(content);
 }
 
 function hideTip() {
