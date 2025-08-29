@@ -696,9 +696,13 @@ select optgroup {
   color: var(--fg);
 }
 
-#raceBox, #terrainBox, #resBox {
+/* Ensure checkbox groups use a grid layout */
+#filters #raceBox,
+#filters #terrainBox,
+#filters #resBox {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
 }
 
 /* ===== Accordion Styles ===== */
