@@ -3,14 +3,14 @@ import { selectSystem } from './ui.js';
 import * as i18n from './localization.js';
 
 // Module-level variables for SVG elements
-let svg, gRoot, gCells, gEdges, gPoints, gLabels, tip, zoom;
+let svg, gRoot, gCells, gPoints, gLabels, tip, zoom;
 
 export function initMap() {
   // Initialize selections now that the DOM is ready
   svg = d3.select('#map');
   gRoot = svg.append('g').attr('id', 'root');
   gCells = gRoot.append('g').attr('id', 'cells');
-  gEdges = gRoot.append('g').attr('id', 'edges').attr('class', 'edges');
+  gRoot.append('g').attr('id', 'edges').attr('class', 'edges'); // Still create the group for order, but don't store it
   gPoints = gRoot.append('g').attr('id', 'points');
   gLabels = gRoot.append('g').attr('id', 'labels');
   tip = d3.select('#tip');
@@ -27,9 +27,6 @@ export function initMap() {
   zo.addEventListener('click', () => svg.transition().duration(180).call(zoom.scaleBy, 1 / 1.2));
   zr.addEventListener('click', () => svg.transition().duration(220).call(zoom.transform, d3.zoomIdentity));
 
-  document.getElementById('toggleEdges').addEventListener('change', e => {
-    gEdges.attr('display', e.target.checked ? null : 'none');
-  });
   document.getElementById('toggleLabels').addEventListener('change', e => {
     gLabels.attr('display', e.target.checked ? null : 'none');
   });
@@ -145,17 +142,6 @@ export function showGalaxy(galaxyId, callback) {
     exit => exit.remove()
   );
 
-  const edges = gEdges.selectAll('path').data([0]);
-  edges.join(
-    enter => enter.append('path')
-      .attr('d', VIZ.delaunay.render())
-      .attr('fill', 'none')
-      .attr('stroke-dasharray', 3)
-      .attr('stroke-dashoffset', 15)
-      .call(e => e.transition().duration(800).attr('stroke-dashoffset', 0)),
-    update => update.attr('d', VIZ.delaunay.render())
-  );
-
   const pts = gPoints.selectAll('circle').data(systems, d => d.id);
   pts.join(
     enter => enter.append('circle')
@@ -256,12 +242,6 @@ function showTip(event, s) {
 
   // Manual positioning logic
   tip.html(content).style('display', 'block');
-  const tooltipNode = tip.node();
-  const tooltipWidth = tooltipNode.offsetWidth;
-  const tooltipHeight = tooltipNode.offsetHeight;
-
-  tip.style('left', (event.clientX - tooltipWidth / 2) + 'px')
-     .style('top', (event.clientY - tooltipHeight - 15) + 'px'); // 15px margin above cursor
 }
 
 function hideTip() {
