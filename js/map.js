@@ -1,0 +1,212 @@
+import { STATE, VIZ, svg, gRoot, gCells, gEdges, gPoints, gLabels, tip } from './state.js';
+import { selectSystem } from './ui.js';
+import { updateHash } from './app.js';
+
+let zoom;
+
+export function initMap() {
+  zoom = d3.zoom().scaleExtent([0.5, 4]).on('zoom', (ev) => {
+    gRoot.attr('transform', ev.transform);
+  });
+  svg.call(zoom);
+
+  const zi = document.getElementById('zoomIn'),
+        zo = document.getElementById('zoomOut'),
+        zr = document.getElementById('zoomReset');
+  zi.addEventListener('click', () => svg.transition().duration(180).call(zoom.scaleBy, 1.2));
+  zo.addEventListener('click', () => svg.transition().duration(180).call(zoom.scaleBy, 1 / 1.2));
+  zr.addEventListener('click', () => svg.transition().duration(220).call(zoom.transform, d3.zoomIdentity));
+
+  document.getElementById('toggleEdges').addEventListener('change', e => {
+    gEdges.attr('display', e.target.checked ? null : 'none');
+  });
+  document.getElementById('toggleLabels').addEventListener('change', e => {
+    gLabels.attr('display', e.target.checked ? null : 'none');
+  });
+  document.getElementById('togglePoints').addEventListener('change', e => {
+    gPoints.attr('display', e.target.checked ? null : 'none');
+  });
+
+  const labelSizeSlider = document.getElementById('labelSize');
+  labelSizeSlider.addEventListener('input', e => {
+    STATE.labelSize = parseInt(e.target.value);
+    gLabels.selectAll('text').style('font-size', STATE.labelSize + 'px');
+  });
+}
+
+export function initStars() {
+  const cvs = document.getElementById('stars');
+  const ctx = cvs.getContext('2d');
+  const DPR = window.devicePixelRatio || 1;
+  const stars = [];
+
+  function generateStars(w, h) {
+    stars.length = 0;
+    const count = Math.floor((w * h) / 1800);
+    for (let i = 0; i < count; i++) {
+      stars.push({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        r: Math.random() * 1.8 + 0.2,
+        a: 0.75 * Math.random() + 0.25,
+        twinkle: Math.random() * Math.PI * 2
+      });
+    }
+  }
+
+  function draw() {
+    const w = cvs.clientWidth, h = cvs.clientHeight;
+    cvs.width = Math.floor(w * DPR);
+    cvs.height = Math.floor(h * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+
+    if (stars.length === 0) generateStars(w, h);
+
+    const time = Date.now() * 0.001;
+    stars.forEach(star => {
+      const twinkle = Math.sin(time + star.twinkle) * 0.3 + 0.7;
+      ctx.fillStyle = `rgba(220,235,255,${star.a * twinkle})`;
+      ctx.beginPath();
+      ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    const grd = ctx.createRadialGradient(w * 0.75, h * 0.2, 40, w * 0.7, h * 0.15, 400);
+    grd.addColorStop(0, 'rgba(0,212,255,.06)');
+    grd.addColorStop(0.5, 'rgba(131,102,255,.04)');
+    grd.addColorStop(1, 'rgba(110,173,254,0)');
+    ctx.fillStyle = grd;
+    ctx.beginPath();
+    ctx.rect(0, 0, w, h);
+    ctx.fill();
+
+    requestAnimationFrame(draw);
+  }
+
+  new ResizeObserver(() => { generateStars(cvs.clientWidth, cvs.clientHeight); }).observe(cvs);
+  draw();
+}
+
+export function showGalaxy(galaxyId, callback) {
+  const galaxy = STATE.galaxyIndex.get(galaxyId); if (!galaxy) return;
+  STATE.currentGalaxyId = galaxyId;
+
+  const systems = (galaxy.systems || []).filter(s => Number.isFinite(s.x) && Number.isFinite(s.y));
+  VIZ.galaxy = galaxy;
+  VIZ.systems = systems;
+
+  const pad = 40;
+  const xExtent = d3.extent(systems, d => d.x), yExtent = d3.extent(systems, d => d.y);
+  const xScale = d3.scaleLinear().domain(xExtent).range([pad, VIZ.width - pad]);
+  const yScale = d3.scaleLinear().domain(yExtent).range([VIZ.height - pad, pad]);
+  VIZ.scaleX = xScale;
+  VIZ.scaleY = yScale;
+
+  const points = systems.map(s => [xScale(s.x), yScale(s.y)]);
+  VIZ.delaunay = d3.Delaunay.from(points);
+  VIZ.voronoi = VIZ.delaunay.voronoi([0, 0, VIZ.width, VIZ.height]);
+
+  const colorMap = d3.scaleOrdinal()
+    .domain([...new Set(systems.map(s => s.color || 'gray'))])
+    .range(['#00d4ff', '#8366ff', '#ff6b9d', '#ffa502', '#00ff88', '#74b9ff', '#a29bfe', '#fd79a8', '#fdcb6e']);
+
+  const cells = gCells.selectAll('path').data(systems, d => d.id);
+  cells.join(
+    enter => enter.append('path')
+      .attr('class', 'cell')
+      .attr('id', d => `cell-${d.id}`)
+      .attr('d', (_, i) => VIZ.voronoi.renderCell(i))
+      .attr('fill', d => colorMap(d.color || 'gray'))
+      .attr('opacity', 0)
+      .on('mousemove', (event, d) => showTip(event, d))
+      .on('mouseleave', hideTip)
+      .on('click', (_, d) => selectSystem(d.id, []))
+      .call(e => e.transition().duration(600).attr('opacity', .85)),
+    update => update
+      .attr('d', (_, i) => VIZ.voronoi.renderCell(i))
+      .attr('fill', d => colorMap(d.color || 'gray'))
+      .attr('opacity', .85),
+    exit => exit.remove()
+  );
+
+  const edges = gEdges.selectAll('path').data([0]);
+  edges.join(
+    enter => enter.append('path')
+      .attr('d', VIZ.delaunay.render())
+      .attr('fill', 'none')
+      .attr('stroke-dasharray', 3)
+      .attr('stroke-dashoffset', 15)
+      .call(e => e.transition().duration(800).attr('stroke-dashoffset', 0)),
+    update => update.attr('d', VIZ.delaunay.render())
+  );
+
+  const pts = gPoints.selectAll('circle').data(systems, d => d.id);
+  pts.join(
+    enter => enter.append('circle')
+      .attr('class', 'point')
+      .attr('id', d => `pt-${d.id}`)
+      .attr('r', 8)
+      .attr('cx', d => xScale(d.x))
+      .attr('cy', d => yScale(d.y))
+      .attr('fill', '#ffffff')
+      .on('mousemove', (event, d) => showTip(event, d))
+      .on('mouseleave', hideTip)
+      .on('click', (_, d) => selectSystem(d.id, [])),
+    update => update.attr('cx', d => xScale(d.x)).attr('cy', d => yScale(d.y)),
+    exit => exit.remove()
+  );
+
+  const labels = gLabels.selectAll('text').data(systems, d => d.id);
+  labels.join(
+    enter => enter.append('text')
+      .attr('x', d => xScale(d.x))
+      .attr('y', d => yScale(d.y) + 20)
+      .attr('text-anchor', 'middle')
+      .text(d => d.name || d.id)
+      .style('font-size', STATE.labelSize + 'px')
+      .attr('opacity', 0)
+      .call(e => e.transition().duration(400).attr('opacity', .9)),
+    update => update
+      .attr('x', d => xScale(d.x))
+      .attr('y', d => yScale(d.y) + 20)
+      .attr('text-anchor', 'middle')
+      .text(d => d.name || d.id)
+      .style('font-size', STATE.labelSize + 'px')
+      .attr('opacity', .9),
+    exit => exit.remove()
+  );
+
+  clearHighlight();
+  if (typeof callback === 'function') callback();
+}
+
+function showTip(event, s) {
+  const planets = (s.planets || []).length,
+        stations = (s.stations || []).length,
+        belts = (s.asteroidBelts || []).length;
+  tip.style('display', 'block')
+    .style('left', (event.clientX) + 'px')
+    .style('top', (event.clientY) + 'px')
+    .html(`<div><strong style="color:var(--accent)">${s.name || s.id}</strong></div>
+           <div class="small muted">Планет: ${planets} • Станций: ${stations} • Поясов: ${belts}</div>`);
+}
+
+function hideTip() {
+  tip.style('display', 'none');
+}
+
+export function clearHighlight() {
+  if (STATE.lastHighlightId) {
+    d3.select(`#cell-${STATE.lastHighlightId}`).classed('highlight', false);
+    d3.select(`#pt-${STATE.lastHighlightId}`).classed('highlight', false);
+  }
+  STATE.lastHighlightId = null;
+}
+
+export function highlightSystem(systemId) {
+  clearHighlight();
+  STATE.lastHighlightId = systemId;
+  d3.select(`#cell-${systemId}`).classed('highlight', true);
+  d3.select(`#pt-${systemId}`).classed('highlight', true);
+}
