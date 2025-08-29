@@ -2,7 +2,7 @@ import { STATE } from './state.js';
 import { unique } from './utils.js';
 import { initMap, showGalaxy, initStars } from './map.js';
 import { buildFiltersUI, renderDetailsEmpty, selectSystem } from './ui.js';
-import { initFilters } from './filters.js';
+import { initFilters, runSearch } from './filters.js';
 
 async function loadComponents() {
   const [filtersHTML, mapHTML] = await Promise.all([
@@ -64,9 +64,10 @@ function onDataLoaded(data) {
     .attr('value', d => d.id).text(d => d.name || d.id);
   sel.on('change', () => {
     const val = sel.property('value');
-    showGalaxy(val);
+    showGalaxy(val, () => {
+      runSearch();
+    });
     updateHash({ galaxy: val, system: '' });
-    renderDetailsEmpty();
   });
 
   const params = new URLSearchParams(location.hash.replace(/^#/, ''));

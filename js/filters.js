@@ -1,7 +1,7 @@
 import { STATE } from './state.js';
 import { textIncludes, normVector, cosineSim } from './utils.js';
 import { renderDetailsEmpty, renderSummaryList } from './ui.js';
-import { clearHighlight } from './map.js';
+import { clearHighlight, highlightMultipleSystems } from './map.js';
 import { updateHash } from './app.js';
 import * as i18n from './localization.js';
 
@@ -78,6 +78,7 @@ function approxMatchHOP_byRatio(p, ratioPct, thresholdPct) {
 }
 
 export function runSearch() {
+  clearHighlight();
   const f = getFilters();
   const anyUse = f.useGalaxy || f.useSystem || f.usePlanets || f.useStations || f.useInhabitable || f.useRaces;
   if (!anyUse) {
@@ -194,6 +195,9 @@ export function runSearch() {
 
   entries.sort((a, b) => (a.system.name || '').localeCompare(b.system.name || ''));
   renderSummaryList(entries);
+
+  const systemIds = entries.map(e => e.system.id);
+  highlightMultipleSystems(systemIds);
 }
 
 export function clearSearch() {

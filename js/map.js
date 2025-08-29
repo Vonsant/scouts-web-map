@@ -45,7 +45,6 @@ export function initMap() {
 
 export function initStars() {
   const cvs = document.getElementById('stars');
-  // Check if canvas exists, it might not if component hasn't loaded
   if (!cvs) return;
   const ctx = cvs.getContext('2d');
   const DPR = window.devicePixelRatio || 1;
@@ -66,7 +65,7 @@ export function initStars() {
   }
 
   function draw() {
-    if (!cvs.isConnected) return; // Stop drawing if canvas is removed
+    if (!cvs.isConnected) return;
     const w = cvs.clientWidth, h = cvs.clientHeight;
     cvs.width = Math.floor(w * DPR);
     cvs.height = Math.floor(h * DPR);
@@ -192,8 +191,11 @@ export function showGalaxy(galaxyId, callback) {
     exit => exit.remove()
   );
 
-  clearHighlight();
-  if (typeof callback === 'function') callback();
+  if (typeof callback === 'function') {
+      callback();
+  } else {
+      clearHighlight();
+  }
 }
 
 function showTip(event, s) {
@@ -212,11 +214,9 @@ function hideTip() {
 }
 
 export function clearHighlight() {
-  if (STATE.lastHighlightId) {
-    d3.select(`#cell-${STATE.lastHighlightId}`).classed('highlight', false);
-    d3.select(`#pt-${STATE.lastHighlightId}`).classed('highlight', false);
-  }
   STATE.lastHighlightId = null;
+  gCells.selectAll('.highlight').classed('highlight', false);
+  gPoints.selectAll('.highlight').classed('highlight', false);
 }
 
 export function highlightSystem(systemId) {
@@ -224,4 +224,14 @@ export function highlightSystem(systemId) {
   STATE.lastHighlightId = systemId;
   d3.select(`#cell-${systemId}`).classed('highlight', true);
   d3.select(`#pt-${systemId}`).classed('highlight', true);
+}
+
+export function highlightMultipleSystems(systemIds) {
+    clearHighlight();
+    if (!systemIds || !systemIds.length) return;
+
+    systemIds.forEach(id => {
+        d3.select(`#cell-${id}`).classed('highlight', true);
+        d3.select(`#pt-${id}`).classed('highlight', true);
+    });
 }
