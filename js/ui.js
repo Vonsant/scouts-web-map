@@ -70,6 +70,7 @@ export function renderSystemDetails(s, highlightPlanetIds) {
   if (s.planets && s.planets.length > 0) {
     const blkPl = document.createElement('div');
     blkPl.className = 'blk';
+    blkPl.id = 'planet-details-block'; // Add ID for styling
     blkPl.innerHTML = `<div class="hdrline"><h3>Планеты</h3></div>`;
     const plGrid = document.createElement('div');
     plGrid.className = 'grid';

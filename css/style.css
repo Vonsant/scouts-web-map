@@ -736,6 +736,14 @@ select optgroup {
 
 label:has(#ratioSim) {
   font-size: 13px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+label:has(#ratioSim) input[type=range] {
+  width: 100%;
+  margin: 8px 0;
 }
 
 /* Tighter chips for the uninhabitable filter */
@@ -782,4 +790,11 @@ label:has(#ratioSim) {
 #filters .blk.active {
   background:linear-gradient(135deg, rgba(38,45,65,.9) 0%, rgba(25,30,45,.8) 100%);
   box-shadow: 0 0 25px rgba(0,212,255,.2);
+}
+
+/* Make the planet list in the details view scrollable */
+#planet-details-block .grid {
+  max-height: 450px;
+  overflow-y: auto;
+  padding-right: 8px;
 }
