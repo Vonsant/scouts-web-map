@@ -253,9 +253,9 @@ export function initFilters() {
               P = Math.round(100 - B);
         fill.style.left = A + '%';
         fill.style.right = (100 - B) + '%';
-        outH.textContent = H;
-        outO.textContent = O;
-        outP.textContent = P;
+        outH.textContent = H + '%';
+        outO.textContent = O + '%';
+        outP.textContent = P + '%';
         STATE.ratio = { h: H, o: O, p: P };
     }
     a.addEventListener('input', updateDouble);
