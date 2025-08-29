@@ -3,22 +3,29 @@ import { showGalaxy, highlightSystem } from './map.js';
 import { updateHash } from './app.js';
 import { fmtInt } from './utils.js';
 import * as i18n from './localization.js';
+import { runSearch } from './filters.js';
 
 export function selectSystem(systemId, highlightPlanetIds) {
   const ref = STATE.systemIndex.get(systemId);
   if (!ref) return;
-  const targetGalaxyId = ref.galaxyId;
 
-  if (targetGalaxyId !== STATE.currentGalaxyId) {
-    d3.select('#galaxySelect').property('value', targetGalaxyId);
-    showGalaxy(targetGalaxyId, () => {
+  if (STATE.isDesktop) {
+    const targetGalaxyId = ref.galaxyId;
+    if (targetGalaxyId !== STATE.currentGalaxyId) {
+      d3.select('#galaxySelect').property('value', targetGalaxyId);
+      showGalaxy(targetGalaxyId, () => {
+        highlightSystem(systemId);
+        renderSystemDetails(ref.system, highlightPlanetIds || []);
+      });
+    } else {
       highlightSystem(systemId);
       renderSystemDetails(ref.system, highlightPlanetIds || []);
-    });
+    }
   } else {
-    highlightSystem(systemId);
+    // On mobile, just render the details.
     renderSystemDetails(ref.system, highlightPlanetIds || []);
   }
+
   updateHash({ system: systemId });
 }
 
@@ -39,6 +46,17 @@ function getPlanetName(s, id) {
 export function renderSystemDetails(s, highlightPlanetIds) {
   const wrap = d3.select('#details');
   wrap.html('');
+
+  if (!STATE.isDesktop) {
+    const backBtn = document.createElement('button');
+    backBtn.className = 'ghost mobile-back-button';
+    backBtn.innerHTML = '‹ Назад к результатам';
+    backBtn.onclick = () => {
+      runSearch();
+      window.scrollTo(0, 0);
+    };
+    wrap.node().appendChild(backBtn);
+  }
 
   // System Header (Color and Type removed)
   const head = document.createElement('div');
@@ -217,6 +235,18 @@ export function renderSystemDetails(s, highlightPlanetIds) {
 export function renderSummaryList(entries) {
   const wrap = d3.select('#details');
   wrap.html('');
+
+  if (!STATE.isDesktop) {
+    const backBtn = document.createElement('button');
+    backBtn.className = 'ghost mobile-back-button';
+    backBtn.innerHTML = '‹ Назад к фильтрам';
+    backBtn.onclick = () => {
+      document.body.classList.remove('mobile-details-visible');
+      window.scrollTo(0, 0);
+    };
+    wrap.node().appendChild(backBtn);
+  }
+
   const title = document.createElement('div');
   title.className = 'small muted';
   title.textContent = `Найдено систем: ${entries.length}`;

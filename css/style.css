@@ -795,3 +795,147 @@ label:has(#ratioSim) input[type=range] {
   background:linear-gradient(135deg, rgba(38,45,65,.9) 0%, rgba(25,30,45,.8) 100%);
   box-shadow: 0 0 25px rgba(0,212,255,.2);
 }
+
+/* ===== MOBILE ADAPTATION ===== */
+
+.mobile-back-button {
+  display: none; /* Hidden by default, shown on mobile via media query */
+  margin-bottom: 12px;
+}
+
+@media (max-width: 800px) {
+  /* Hide map on mobile */
+  #mapWrap {
+    display: none;
+  }
+
+  /* Adjust header for smaller screens */
+  header {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 12px;
+  }
+  header .left {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  header .row {
+    width: 100%;
+  }
+  header h1 {
+    font-size: 22px;
+  }
+  .pill {
+    padding: 3px 10px;
+    font-size: 13px;
+  }
+
+  /* Main content layout */
+  #content {
+    grid-template-columns: 1fr;
+    padding: 12px;
+    gap: 12px;
+    height: auto;
+    overflow: visible;
+  }
+
+  #filters, #details {
+    height: auto;
+    max-height: none;
+    min-height: 0;
+    width: 100%;
+    overflow-y: visible;
+  }
+
+  /* --- Mobile View Switching --- */
+  /* By default, show filters, hide details */
+  #details {
+    display: none;
+  }
+
+  /* When body has this class, hide filters and show details */
+  body.mobile-details-visible #filters {
+    display: none;
+  }
+  body.mobile-details-visible #details {
+    display: flex; /* Use flex to keep column layout */
+  }
+  /* --- End View Switching --- */
+
+  .mobile-back-button {
+    display: block;
+  }
+
+  /* Adjust panel appearance */
+  .card, .blk, #filters, #details {
+    border-radius: 12px;
+  }
+
+  /* Make filter sections non-collapsible and always open on mobile */
+  #filters .blk .collapsible-content {
+    max-height: 1000px;
+    overflow: visible;
+    padding-top: 14px;
+    padding-bottom: 14px;
+  }
+  #filters .blk .hdrline {
+    cursor: default;
+  }
+  #filters .blk.active { /* Disable active state glow on mobile */
+    box-shadow: none;
+  }
+
+  /* Make result cards more compact */
+  .result .sysSub {
+    font-size: 14px;
+  }
+
+  .kv {
+    grid-template-columns: 1fr; /* Stack key-value pairs */
+    gap: 4px 0;
+    font-size: 14px;
+  }
+  .kv .k {
+    opacity: .7;
+    font-size: 13px;
+  }
+  .kv .v {
+    padding-left: 8px;
+    margin-bottom: 8px;
+  }
+
+  /* Make filter checkboxes one column for easier tapping */
+  #filters #raceBox,
+  #filters #terrainBox,
+  #filters #resBox {
+    grid-template-columns: 1fr;
+  }
+
+  /* Make search buttons full-width */
+  #filters .blk:last-child .row {
+    flex-direction: column;
+  }
+  #runSearch, #clearSearch {
+    width: 100%;
+  }
+}
+
+/* Landscape orientation on mobile */
+@media (max-width: 800px) and (orientation: landscape) {
+  #content {
+    grid-template-columns: 320px 1fr; /* Filters and details side-by-side */
+    gap: 12px;
+    height: calc(100vh - 150px); /* Adjust based on header height */
+  }
+
+  #filters, #details {
+    display: flex !important; /* Override view switching logic and always show both */
+    height: 100%;
+    overflow-y: auto;
+  }
+
+  .mobile-back-button {
+    display: none !important; /* No need for a back button in landscape */
+  }
+}

@@ -4,13 +4,22 @@ import { initMap, showGalaxy, initStars } from './map.js';
 import { buildFiltersUI, renderDetailsEmpty, selectSystem } from './ui.js';
 import { initFilters, runSearch } from './filters.js';
 
+const isDesktop = () => window.matchMedia("(min-width: 801px)").matches;
+
 async function loadComponents() {
-  const [filtersHTML, mapHTML] = await Promise.all([
-    fetch('components/filters.html').then(res => res.text()),
-    fetch('components/map.html').then(res => res.text())
-  ]);
+  const filtersPromise = fetch('components/filters.html').then(res => res.text());
+
+  const promises = [filtersPromise];
+  if (STATE.isDesktop) {
+    promises.push(fetch('components/map.html').then(res => res.text()));
+  }
+
+  const [filtersHTML, mapHTML] = await Promise.all(promises);
+
   document.getElementById('filters').innerHTML = filtersHTML;
-  document.getElementById('mapWrap').innerHTML = mapHTML;
+  if (STATE.isDesktop && mapHTML) {
+    document.getElementById('mapWrap').innerHTML = mapHTML;
+  }
 }
 
 function onDataLoaded(data) {
@@ -64,9 +73,14 @@ function onDataLoaded(data) {
     .attr('value', d => d.id).text(d => d.name || d.id);
   sel.on('change', () => {
     const val = sel.property('value');
-    showGalaxy(val, () => {
+    if (STATE.isDesktop) {
+      showGalaxy(val, () => {
+        runSearch();
+      });
+    } else {
+      STATE.currentGalaxyId = val;
       runSearch();
-    });
+    }
     updateHash({ galaxy: val, system: '' });
   });
 
@@ -76,13 +90,24 @@ function onDataLoaded(data) {
   const defaultGalaxy = gFromHash && STATE.galaxyIndex.has(gFromHash) ? gFromHash : data.galaxies[0].id;
   sel.property('value', defaultGalaxy);
 
-  showGalaxy(defaultGalaxy, () => {
+  if (STATE.isDesktop) {
+    showGalaxy(defaultGalaxy, () => {
+      if (sFromHash && STATE.systemIndex.has(sFromHash)) {
+        selectSystem(sFromHash, []);
+      } else {
+        renderDetailsEmpty();
+      }
+    });
+  } else {
+    STATE.currentGalaxyId = defaultGalaxy;
     if (sFromHash && STATE.systemIndex.has(sFromHash)) {
       selectSystem(sFromHash, []);
     } else {
+      // On mobile, run an empty search to show the initial "no filters" message
+      // in the results panel, which is initially hidden.
       renderDetailsEmpty();
     }
-  });
+  }
 }
 
 function parseLoadedJson(text) {
@@ -151,9 +176,12 @@ export function updateHash({ galaxy, system }) {
 }
 
 async function main() {
+  STATE.isDesktop = isDesktop();
   await loadComponents();
-  initMap();
-  initStars();
+  if (STATE.isDesktop) {
+    initMap();
+    initStars();
+  }
   initFilters();
   try {
     await loadData();

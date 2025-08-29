@@ -1,4 +1,5 @@
 export const STATE = {
+  isDesktop: false,
   data: null,
   galaxyIndex: new Map(),
   systemIndex: new Map(),

@@ -78,7 +78,7 @@ function approxMatchHOP_byRatio(p, ratioPct, thresholdPct) {
 }
 
 export function runSearch() {
-  clearHighlight();
+  if (STATE.isDesktop) clearHighlight();
   const f = getFilters();
   const anyUse = f.useGalaxy || f.useSystem || f.usePlanets || f.useStations || f.useInhabitable || f.useRaces;
   if (!anyUse) {
@@ -196,8 +196,15 @@ export function runSearch() {
   entries.sort((a, b) => (a.system.name || '').localeCompare(b.system.name || ''));
   renderSummaryList(entries);
 
-  const systemIds = entries.map(e => e.system.id);
-  highlightMultipleSystems(systemIds);
+  if (!STATE.isDesktop) {
+    document.body.classList.add('mobile-details-visible');
+    window.scrollTo(0, 0);
+  }
+
+  if (STATE.isDesktop) {
+    const systemIds = entries.map(e => e.system.id);
+    highlightMultipleSystems(systemIds);
+  }
 }
 
 export function clearSearch() {
@@ -216,7 +223,7 @@ export function clearSearch() {
   document.getElementById('ratioSimVal').textContent = '0';
   document.getElementById('splitA').dispatchEvent(new Event('input'));
   renderDetailsEmpty();
-  clearHighlight();
+  if (STATE.isDesktop) clearHighlight();
   updateHash({ system: '' });
 }
 
