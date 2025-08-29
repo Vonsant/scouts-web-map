@@ -39,13 +39,14 @@ function onDataLoaded(data) {
   d3.select('#stCount').text(stCount);
   d3.select('#abCount').text(abCount);
 
-  const terrains = [], res = [], stTypes = [];
+  const terrains = [], res = [], stTypes = [], races = [];
   data.galaxies.forEach(g => (g.systems || []).forEach(s => {
     (s.planets || []).forEach(p => {
       if (p.category === 'inhabitable') {
         if (p.terrain) terrains.push(String(p.terrain));
         (p.resources || []).forEach(r => res.push(String(r)));
       }
+      if (p.race) races.push(String(p.race));
     });
     (s.stations || []).forEach(t => {
       if (t.type) stTypes.push(String(t.type));
@@ -54,6 +55,7 @@ function onDataLoaded(data) {
   STATE.dict.terrains = unique(terrains).sort((a, b) => a.localeCompare(b));
   STATE.dict.res = unique(res).sort((a, b) => a.localeCompare(b));
   STATE.dict.stTypes = unique(stTypes).sort((a, b) => a.localeCompare(b));
+  STATE.dict.races = unique(races).sort((a, b) => a.localeCompare(b));
 
   buildFiltersUI();
 

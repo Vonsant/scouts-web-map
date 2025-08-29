@@ -2,6 +2,7 @@ import { STATE } from './state.js';
 import { showGalaxy, highlightSystem } from './map.js';
 import { updateHash } from './app.js';
 import { fmtInt, unique } from './utils.js';
+import * as i18n from './localization.js';
 
 export function selectSystem(systemId, highlightPlanetIds) {
   const ref = STATE.systemIndex.get(systemId);
@@ -26,11 +27,14 @@ export function renderDetailsEmpty() {
   wrap.html('');
   const note = document.createElement('div');
   note.className = 'muted small';
-  note.textContent = 'Включите флажки «Использовать в поиске» для нужных блоков и задайте параметры.';
+  note.textContent = 'Раскройте один из блоков фильтров, чтобы начать поиск.';
   wrap.node().appendChild(note);
 }
 
-function getPlanetName(s,id){ const p=(s.planets||[]).find(pp=>pp.id===id); return p?(p.name||p.id):id; }
+function getPlanetName(s, id) {
+  const p = (s.planets || []).find(pp => pp.id === id);
+  return p ? (p.name || p.id) : id;
+}
 
 export function renderSystemDetails(s, highlightPlanetIds) {
   const wrap = d3.select('#details');
@@ -74,64 +78,71 @@ export function renderSystemDetails(s, highlightPlanetIds) {
     plGrid.className = 'grid';
     plGrid.style.gap = '8px';
     (s.planets || []).forEach(p => {
-        const card = document.createElement('div');
-        card.className = 'planetCard';
-        if (highlightSet.has(p.id)) card.classList.add('match');
-        const hdr = document.createElement('div');
-        hdr.className = 'hdr';
-        const left = document.createElement('div');
-        left.className = 'name';
-        left.textContent = p.name || p.id || 'Планета';
-        const right = document.createElement('div');
-        right.className = 'small muted';
-        right.textContent = (p.category === 'habitable' ? 'Обитаема' : (p.category === 'inhabitable' ? 'Необитаема' : (p.category || '')));
-        hdr.appendChild(left);
-        hdr.appendChild(right);
-        card.appendChild(hdr);
-        const kvp = document.createElement('div');
-        kvp.className = 'kv';
-        if (p.category === 'habitable') {
-            [
-                ['Уровень', Number.isFinite(p.level) ? p.level : '—'], ['Раса', p.race || '—'], ['Экономика', p.economics || '—'], ['Политика', p.politics || '—'], ['Население', (p.population != null ? fmtInt(p.population) : '—')]
-            ].forEach(([k, v]) => {
-                const kEl = document.createElement('div');
-                kEl.className = 'k';
-                kEl.textContent = k;
-                const vEl = document.createElement('div');
-                vEl.className = 'v';
-                vEl.textContent = v;
-                kvp.appendChild(kEl);
-                kvp.appendChild(vEl);
-            });
-            card.appendChild(kvp);
-        } else {
-            [
-                ['Рельеф', p.terrain || '—'], ['Горы', p.hills || '—'], ['Океаны', p.oceans || '—'], ['Равнины', p.plains || '—']
-            ].forEach(([k, v]) => {
-                const kEl = document.createElement('div');
-                kEl.className = 'k';
-                kEl.textContent = k;
-                const vEl = document.createElement('div');
-                vEl.className = 'v';
-                vEl.textContent = v;
-                kvp.appendChild(kEl);
-                kvp.appendChild(vEl);
-            });
-            card.appendChild(kvp);
-        }
-        if (p.resources && p.resources.length) {
-            const tags = document.createElement('div');
-            tags.className = 'tagRow';
-            tags.style.marginTop = '6px';
-            p.resources.forEach(r => {
-                const chip = document.createElement('span');
-                chip.className = 'chip';
-                chip.textContent = r;
-                tags.appendChild(chip);
-            });
-            card.appendChild(tags);
-        }
-        plGrid.appendChild(card);
+      const card = document.createElement('div');
+      card.className = 'planetCard';
+      if (highlightSet.has(p.id)) card.classList.add('match');
+      const hdr = document.createElement('div');
+      hdr.className = 'hdr';
+      const left = document.createElement('div');
+      left.className = 'name';
+      left.textContent = p.name || p.id || 'Планета';
+      const right = document.createElement('div');
+      right.className = 'small muted';
+      right.textContent = (p.category === 'habitable' ? 'Обитаема' : (p.category === 'inhabitable' ? 'Необитаема' : (p.category || '')));
+      hdr.appendChild(left);
+      hdr.appendChild(right);
+      card.appendChild(hdr);
+      const kvp = document.createElement('div');
+      kvp.className = 'kv';
+      if (p.category === 'habitable') {
+        [
+          ['Уровень', Number.isFinite(p.level) ? p.level : '—'],
+          ['Раса', i18n.translate(i18n.races, p.race) || '—'],
+          ['Экономика', i18n.translate(i18n.economics, p.economics) || '—'],
+          ['Политика', i18n.translate(i18n.politics, p.politics) || '—'],
+          ['Население', (p.population != null ? fmtInt(p.population) : '—')]
+        ].forEach(([k, v]) => {
+          const kEl = document.createElement('div');
+          kEl.className = 'k';
+          kEl.textContent = k;
+          const vEl = document.createElement('div');
+          vEl.className = 'v';
+          vEl.textContent = v;
+          kvp.appendChild(kEl);
+          kvp.appendChild(vEl);
+        });
+        card.appendChild(kvp);
+      } else {
+        [
+          ['Рельеф', i18n.translate(i18n.terrains, p.terrain) || '—'],
+          ['Горы', p.hills || '—'],
+          ['Океаны', p.oceans || '—'],
+          ['Равнины', p.plains || '—']
+        ].forEach(([k, v]) => {
+          const kEl = document.createElement('div');
+          kEl.className = 'k';
+          kEl.textContent = k;
+          const vEl = document.createElement('div');
+          vEl.className = 'v';
+          vEl.textContent = v;
+          kvp.appendChild(kEl);
+          kvp.appendChild(vEl);
+        });
+        card.appendChild(kvp);
+      }
+      if (p.resources && p.resources.length) {
+        const tags = document.createElement('div');
+        tags.className = 'tagRow';
+        tags.style.marginTop = '6px';
+        p.resources.forEach(r => {
+          const chip = document.createElement('span');
+          chip.className = 'chip';
+          chip.textContent = i18n.translate(i18n.resources, r);
+          tags.appendChild(chip);
+        });
+        card.appendChild(tags);
+      }
+      plGrid.appendChild(card);
     });
     blkPl.appendChild(plGrid);
     wrap.node().appendChild(blkPl);
@@ -145,22 +156,22 @@ export function renderSystemDetails(s, highlightPlanetIds) {
     stGrid.className = 'grid';
     stGrid.style.gap = '8px';
     (s.stations || []).forEach(t => {
-        const card = document.createElement('div');
-        card.className = 'stationCard';
-        const hdr = document.createElement('div');
-        hdr.className = 'hdr';
-        const line = document.createElement('div');
-        line.className = 'name small';
-        const parts = [];
-        parts.push(t.type || 'тип?');
-        parts.push('—');
-        parts.push(t.name || t.id || 'Станция');
-        if (Number.isFinite(t.level)) parts.push(`— ур. ${t.level}`);
-        if (t.race) parts.push(`— ${t.race}`);
-        line.textContent = parts.join(' ');
-        hdr.appendChild(line);
-        card.appendChild(hdr);
-        stGrid.appendChild(card);
+      const card = document.createElement('div');
+      card.className = 'stationCard';
+      const hdr = document.createElement('div');
+      hdr.className = 'hdr';
+      const line = document.createElement('div');
+      line.className = 'name small';
+      const parts = [];
+      parts.push(i18n.translate(i18n.stationTypes, t.type) || 'тип?');
+      parts.push('—');
+      parts.push(t.name || t.id || 'Станция');
+      if (Number.isFinite(t.level)) parts.push(`— ур. ${t.level}`);
+      if (t.race) parts.push(`— ${i18n.translate(i18n.races, t.race)}`);
+      line.textContent = parts.join(' ');
+      hdr.appendChild(line);
+      card.appendChild(hdr);
+      stGrid.appendChild(card);
     });
     blkSt.appendChild(stGrid);
     wrap.node().appendChild(blkSt);
@@ -174,27 +185,27 @@ export function renderSystemDetails(s, highlightPlanetIds) {
     abGrid.className = 'grid';
     abGrid.style.gap = '8px';
     (s.asteroidBelts || []).forEach(b => {
-        const card = document.createElement('div');
-        card.className = 'beltCard';
-        const hdr = document.createElement('div');
-        hdr.className = 'hdr';
-        const left = document.createElement('div');
-        left.className = 'name small';
-        left.textContent = `Пояс${Number.isFinite(b.count) ? ` • полей: ${b.count}` : ''}${b.distance ? ` • дистанция: ${b.distance}` : ''}`;
-        hdr.appendChild(left);
-        card.appendChild(hdr);
-        if (b.resources && b.resources.length) {
-            const tags = document.createElement('div');
-            tags.className = 'tagRow';
-            b.resources.forEach(r => {
-                const chip = document.createElement('span');
-                chip.className = 'chip';
-                chip.textContent = r;
-                tags.appendChild(chip);
-            });
-            card.appendChild(tags);
-        }
-        abGrid.appendChild(card);
+      const card = document.createElement('div');
+      card.className = 'beltCard';
+      const hdr = document.createElement('div');
+      hdr.className = 'hdr';
+      const left = document.createElement('div');
+      left.className = 'name small';
+      left.textContent = `Пояс${Number.isFinite(b.count) ? ` • полей: ${b.count}` : ''}${b.distance ? ` • дистанция: ${b.distance}` : ''}`;
+      hdr.appendChild(left);
+      card.appendChild(hdr);
+      if (b.resources && b.resources.length) {
+        const tags = document.createElement('div');
+        tags.className = 'tagRow';
+        b.resources.forEach(r => {
+          const chip = document.createElement('span');
+          chip.className = 'chip';
+          chip.textContent = i18n.translate(i18n.resources, r);
+          tags.appendChild(chip);
+        });
+        card.appendChild(tags);
+      }
+      abGrid.appendChild(card);
     });
     blkAb.appendChild(abGrid);
     wrap.node().appendChild(blkAb);
@@ -255,20 +266,27 @@ export function renderSummaryList(entries) {
 }
 
 export function buildFiltersUI() {
-    d3.select('#galaxyFilter').selectAll('option.extra')
-      .data(STATE.dict.galaxies).join(
-        enter => enter.append('option').attr('class', 'extra').attr('value', d => d.id).text(d => d.name)
-      );
-    d3.select('#stType').selectAll('option.extra')
-      .data(STATE.dict.stTypes).join(
-        enter => enter.append('option').attr('class', 'extra').attr('value', d => d).text(d => d)
-      );
+  d3.select('#galaxyFilter').selectAll('option.extra')
+    .data(STATE.dict.galaxies).join(
+      enter => enter.append('option').attr('class', 'extra').attr('value', d => d.id).text(d => d.name)
+    );
+  d3.select('#stType').selectAll('option.extra')
+    .data(STATE.dict.stTypes).join(
+      enter => enter.append('option').attr('class', 'extra').attr('value', d => d).text(d => i18n.translate(i18n.stationTypes, d))
+    );
 
-    const terrainBox = d3.select('#terrainBox');
-    const terrainItems = terrainBox.selectAll('label.terrain').data(STATE.dict.terrains).join('label').attr('class', 'terrain chip');
-    terrainItems.html(d => `<input type="checkbox" value="${d}"> ${d}`);
+  const terrainBox = d3.select('#terrainBox');
+  terrainBox.selectAll('label.terrain').data(STATE.dict.terrains).join('label')
+    .attr('class', 'terrain chip')
+    .html(d => `<input type="checkbox" value="${d}"> ${i18n.translate(i18n.terrains, d)}`);
 
-    const resBox = d3.select('#resBox');
-    const resItems = resBox.selectAll('label.res').data(STATE.dict.res).join('label').attr('class', 'res chip');
-    resItems.html(d => `<input type="checkbox" value="${d}"> ${d}`);
-  }
+  const resBox = d3.select('#resBox');
+  resBox.selectAll('label.res').data(STATE.dict.res).join('label')
+    .attr('class', 'res chip')
+    .html(d => `<input type="checkbox" value="${d}"> ${i18n.translate(i18n.resources, d)}`);
+
+  const raceBox = d3.select('#raceBox');
+  raceBox.selectAll('label.race').data(STATE.dict.races).join('label')
+    .attr('class', 'race chip')
+    .html(d => `<input type="checkbox" value="${d}"> ${i18n.translate(i18n.races, d)}`);
+}

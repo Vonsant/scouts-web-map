@@ -3,6 +3,7 @@ import { textIncludes, normVector, cosineSim } from './utils.js';
 import { renderDetailsEmpty, renderSummaryList } from './ui.js';
 import { clearHighlight } from './map.js';
 import { updateHash } from './app.js';
+import * as i18n from './localization.js';
 
 function getFilters() {
   const useGalaxy = document.getElementById('filter-block-galaxy').classList.contains('active');
@@ -17,6 +18,7 @@ function getFilters() {
   const plName = document.getElementById('plName').value.trim();
   const plLvlMin = parseInt(document.getElementById('plLvlMin').value || '');
   const plLvlMax = parseInt(document.getElementById('plLvlMax').value || '');
+  const raceChecked = Array.from(document.querySelectorAll('#raceBox input[type="checkbox"]:checked')).map(el => el.value);
   const stType = document.getElementById('stType').value;
   const stName = document.getElementById('stName').value.trim();
   const stLvlMin = parseInt(document.getElementById('stLvlMin').value || '');
@@ -26,7 +28,7 @@ function getFilters() {
   const ratioSim = parseInt(document.getElementById('ratioSim').value, 10);
   const ratio = STATE.ratio;
 
-  return { useGalaxy, useSystem, usePlanets, useStations, useInhabitable, galaxyId, sysName, hasBelt, plName, plLvlMin, plLvlMax, stType, stName, stLvlMin, stLvlMax, terrainChecked, resChecked, ratioSim, ratio };
+  return { useGalaxy, useSystem, usePlanets, useStations, useInhabitable, galaxyId, sysName, hasBelt, plName, plLvlMin, plLvlMax, raceChecked, stType, stName, stLvlMin, stLvlMax, terrainChecked, resChecked, ratioSim, ratio };
 }
 
 function planetHasAllResources(p, want) {
@@ -37,6 +39,11 @@ function planetHasAllResources(p, want) {
 function planetHasAnyTerrain(p, terrains) {
   if (!terrains.length) return true;
   return terrains.includes(String(p.terrain || ''));
+}
+
+function planetHasAnyRace(p, races) {
+    if (!races.length) return true;
+    return races.includes(String(p.race || ''));
 }
 
 function approxMatchHOP_byRatio(p, ratioPct, thresholdPct) {
@@ -91,6 +98,14 @@ export function runSearch() {
           ps.forEach(p => matchedPlanetIds.add(p.id));
         }
       }
+      if (ok && f.raceChecked.length > 0) {
+        const ps = (s.planets || []).filter(p => p.category === 'habitable' && planetHasAnyRace(p, f.raceChecked));
+        if (!ps.length) ok = false;
+        else {
+            reasons.push(`Раса: ${f.raceChecked.map(r => i18n.translate(i18n.races, r)).join(', ')}`);
+            ps.forEach(p => matchedPlanetIds.add(p.id));
+        }
+      }
       if (ok && (!isNaN(f.plLvlMin) || !isNaN(f.plLvlMax))) {
         const ps = (s.planets || []).filter(p => {
           const lvl = Number.isFinite(p.level) ? p.level : null;
@@ -112,7 +127,7 @@ export function runSearch() {
       if (f.stType) {
         const hit = (s.stations || []).some(t => t.type === f.stType);
         if (!hit) ok = false;
-        else reasons.push(`Тип станции: ${f.stType}`);
+        else reasons.push(`Тип станции: ${i18n.translate(i18n.stationTypes, f.stType)}`);
       }
       if (ok && f.stName) {
         const hit = (s.stations || []).some(t => textIncludes(t.name, f.stName));
@@ -137,7 +152,7 @@ export function runSearch() {
         const ps = (s.planets || []).filter(p => p.category === 'inhabitable' && planetHasAnyTerrain(p, f.terrainChecked));
         if (!ps.length) ok = false;
         else {
-          reasons.push(`Рельеф: ${f.terrainChecked.join(', ')}`);
+          reasons.push(`Рельеф: ${f.terrainChecked.map(t => i18n.translate(i18n.terrains, t)).join(', ')}`);
           ps.forEach(p => matchedPlanetIds.add(p.id));
         }
       }
@@ -145,7 +160,7 @@ export function runSearch() {
         const ps = (s.planets || []).filter(p => p.category === 'inhabitable' && planetHasAllResources(p, f.resChecked));
         if (!ps.length) ok = false;
         else {
-          reasons.push(`Ресурсы (на одной планете): ${f.resChecked.join(', ')}`);
+          reasons.push(`Ресурсы: ${f.resChecked.map(r => i18n.translate(i18n.resources, r)).join(', ')}`);
           ps.forEach(p => matchedPlanetIds.add(p.id));
         }
       }
@@ -173,6 +188,7 @@ export function clearSearch() {
   ['sysName', 'plName', 'plLvlMin', 'plLvlMax', 'stName', 'stLvlMin', 'stLvlMax'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('hasBelt').checked = false;
   document.getElementById('stType').value = '';
+  document.querySelectorAll('#raceBox input[type="checkbox"]').forEach(el => el.checked = false);
   document.querySelectorAll('#terrainBox input[type="checkbox"]').forEach(el => el.checked = false);
   document.querySelectorAll('#resBox input[type="checkbox"]').forEach(el => el.checked = false);
   document.getElementById('splitA').value = 33;
