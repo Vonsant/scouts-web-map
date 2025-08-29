@@ -826,6 +826,9 @@ label:has(#ratioSim) input[type=range] {
   header h1 {
     font-size: 22px;
   }
+  header .left .pill {
+    display: none;
+  }
   .pill {
     padding: 3px 10px;
     font-size: 13px;
@@ -872,16 +875,6 @@ label:has(#ratioSim) input[type=range] {
     border-radius: 12px;
   }
 
-  /* Make filter sections non-collapsible and always open on mobile */
-  #filters .blk .collapsible-content {
-    max-height: 1000px;
-    overflow: visible;
-    padding-top: 14px;
-    padding-bottom: 14px;
-  }
-  #filters .blk .hdrline {
-    cursor: default;
-  }
   #filters .blk.active { /* Disable active state glow on mobile */
     box-shadow: none;
   }

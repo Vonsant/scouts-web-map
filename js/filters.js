@@ -78,6 +78,11 @@ function approxMatchHOP_byRatio(p, ratioPct, thresholdPct) {
 }
 
 export function runSearch() {
+  if (!STATE.isDesktop) {
+    document.body.classList.add('mobile-details-visible');
+    window.scrollTo(0, 0);
+  }
+
   if (STATE.isDesktop) clearHighlight();
   const f = getFilters();
   const anyUse = f.useGalaxy || f.useSystem || f.usePlanets || f.useStations || f.useInhabitable || f.useRaces;
@@ -195,11 +200,6 @@ export function runSearch() {
 
   entries.sort((a, b) => (a.system.name || '').localeCompare(b.system.name || ''));
   renderSummaryList(entries);
-
-  if (!STATE.isDesktop) {
-    document.body.classList.add('mobile-details-visible');
-    window.scrollTo(0, 0);
-  }
 
   if (STATE.isDesktop) {
     const systemIds = entries.map(e => e.system.id);
