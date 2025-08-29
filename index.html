@@ -5,69 +5,126 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Карта галактик — диаграмма Вороного</title>
   <style>
-    :root {
-      --bg: #0b1020;
-      --fg: #e9eef9;
-      --panel: #141a2f;
-      --accent: #6ea8fe;
-      --muted: #8ea0c2;
-      --danger: #ff6b6b;
-      --ok: #2ecc71;
+    /* ===== THEME ===== */
+    :root{
+      --bg:#0b1020;
+      --bg-2:#0a1226;
+      --fg:#eaf0ff;
+      --muted:#9fb1d7;
+      --panel:rgba(18,28,60,0.55);
+      --panel-solid:#0e1631;
+      --panel-2:rgba(20,32,70,0.55);
+      --border:#25345d;
+      --accent:#71a9ff;
+      --accent-2:#6ecdea;
+      --chip:#14224a;
+      --ok:#51cf66;
+      --warn:#fcc419;
+      --err:#ff8787;
+      --shadow: 0 10px 30px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.03);
+      --glow: 0 0 0 2px rgba(113,169,255,.25), 0 0 18px rgba(113,169,255,.18);
     }
-    * { box-sizing: border-box; }
-    html, body { height: 100%; margin: 0; background: var(--bg); color: var(--fg); font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji'; }
-    #app { display: grid; grid-template-rows: auto 1fr; height: 100%; }
-    header {
-      display: grid; gap: 12px; grid-template-columns: 1fr auto;
-      align-items: center; padding: 10px 14px; background: linear-gradient(180deg, #0d142b, #0b1020);
-      border-bottom: 1px solid #202b45; position: sticky; top: 0; z-index: 5;
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:radial-gradient(1200px 800px at 20% -20%,#0e1737 0%,#0b1020 45%,#0b1020 100%);color:var(--fg);
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial,'Noto Sans','Apple Color Emoji','Segoe UI Emoji'); -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale}
+    a{color:var(--accent)}
+    .kbd{font:11px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;padding:1px 5px;border:1px solid var(--border);border-radius:6px;background:#0a1228}
+
+    /* ===== LAYOUT ===== */
+    #app{display:grid;grid-template-rows:auto 1fr;height:100%}
+    header{
+      display:grid;gap:12px;grid-template-columns:1fr auto auto;align-items:center;padding:10px 14px;
+      background:linear-gradient(180deg,rgba(18,28,60,.75),rgba(11,16,32,.65)); border-bottom:1px solid #202b45; position:sticky;top:0;z-index:5;
+      backdrop-filter: blur(6px);
     }
-    header .left { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-    header h1 { margin: 0; font-size: 16px; font-weight: 600; color: var(--fg); }
-    select, input, button { background: var(--panel); color: var(--fg); border: 1px solid #2b375b; border-radius: 8px; padding: 8px 10px; }
-    select:focus, input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
-    button { cursor: pointer; }
-    button.primary { background: var(--accent); color: #0b1020; border: none; font-weight: 600; }
-    button.ghost { background: transparent; border: 1px solid #2b375b; }
-    #content { display: grid; grid-template-columns: 1fr 360px; gap: 14px; padding: 14px; }
-    #mapWrap { background: #0d142b; border: 1px solid #223058; border-radius: 14px; position: relative; overflow: hidden; }
-    #map { width: 100%; height: 100%; }
-    #side { background: #0d142b; border: 1px solid #223058; border-radius: 14px; padding: 12px; display: grid; grid-template-rows: auto 1fr; gap: 10px; }
-    #details { overflow: auto; max-height: calc(100vh - 160px); padding-right: 6px; }
-    .muted { color: var(--muted); }
-    .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-    .row label { font-size: 12px; color: var(--muted); }
-    .grid { display: grid; gap: 8px; }
-    .grid.cols2 { grid-template-columns: 1fr 1fr; }
-    .pill { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 999px; border: 1px solid #2b375b; font-size: 12px; color: var(--muted); }
-    .list { display: grid; gap: 8px; }
-    .card { background: #0f1730; border: 1px solid #223058; border-radius: 12px; padding: 10px; }
-    .sysTitle { font-weight: 700; margin: 0; }
-    .sysSub { margin: 4px 0 8px 0; font-size: 12px; color: var(--muted); }
-    .result { cursor: pointer; border: 1px solid transparent; }
-    .result:hover { border-color: var(--accent); }
-    .tooltip {
-      position: absolute; pointer-events: none; transform: translate(-50%, -110%);
-      background: #0b1020e6; border: 1px solid #223058; border-radius: 8px; padding: 6px 8px; font-size: 12px;
-      white-space: nowrap; z-index: 10; display: none;
+    header .left{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    header h1{margin:0;font-size:16px;font-weight:800;letter-spacing:.2px}
+    .pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;border:1px solid var(--border);background:var(--panel-2);font-size:12px;color:var(--muted)}
+
+    #content{display:grid;grid-template-columns:420px 1fr 460px;gap:14px;padding:14px;height:calc(100vh - 64px);min-height:0}
+
+    /* ===== PANELS ===== */
+    .card,.blk,#filters,#details,#mapWrap{
+      border:1px solid var(--border);
+      border-radius:16px;background:var(--panel);
+      box-shadow:var(--shadow)
     }
-    .legend { display: flex; gap: 8px; flex-wrap: wrap; }
-    .legend .item { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
-    .legend .sw { width: 12px; height: 12px; border-radius: 3px; border: 1px solid #0006; }
-    svg text { fill: var(--fg); font-size: 11px; paint-order: stroke; stroke: #000; stroke-width: 2px; }
-    .cell { stroke: #0a0a0a; stroke-width: 2px; }
-    .cell.highlight { stroke: #fff; stroke-width: 3.5px; filter: drop-shadow(0 0 6px rgba(255,255,255,0.4)); }
-    .point { stroke: #000; stroke-width: 1.6px; }
-    .flash {
-      animation: flash 1.5s ease-in-out 0s 2;
+    #filters,#details{padding:12px;overflow:auto;min-height:0}
+    .blk{background:var(--panel-2);padding:12px}
+    .blk h3{margin:0 0 2px 0;font-size:14px;letter-spacing:.3px;color:#cfe3ff}
+    .blk .hdrline{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+    .card{background:rgba(15,23,48,.6);padding:12px}
+    .small{font-size:12px}.muted{color:var(--muted)}
+    .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .grid{display:grid;gap:10px}.grid.cols2{grid-template-columns:1fr 1fr}.grid.cols3{grid-template-columns:repeat(3,1fr)}
+
+    /* ===== FORM ELEMENTS ===== */
+    :where(select,input,button){
+      background:linear-gradient(180deg,rgba(18,28,60,.85),rgba(12,18,40,.9));
+      color:var(--fg); border:1px solid var(--border); border-radius:12px; padding:10px 12px;
+      transition: box-shadow .15s ease, border-color .15s ease, transform .06s ease; accent-color: var(--accent);
     }
-    @keyframes flash {
-      0% { stroke-width: 2px; }
-      50% { stroke-width: 6px; }
-      100% { stroke-width: 2px; }
+    select, input[type="search"], input[type="number"]{width:100%}
+    input[type="search"]{padding-left:36px;background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="%23a9c4ff"><path d="M10 18a8 8 0 1 1 5.293-14.293A8 8 0 0 1 10 18zm11.707 3.293-5.396-5.396a10 10 0 1 0-1.414 1.414l5.396 5.396a1 1 0 0 0 1.414-1.414z"/></svg>'); background-repeat:no-repeat;background-position:10px center}
+    button{cursor:pointer}
+    button.primary{background:linear-gradient(180deg,#8ab8ff,#6daaff);color:#061126;border:1px solid #7db0ff;font-weight:800;box-shadow:0 0 0 0 rgba(113,169,255,.45)}
+    button.primary:hover{box-shadow:0 0 0 3px rgba(113,169,255,.25)}
+    button.ghost{background:transparent;border:1px solid var(--border)}
+    :where(select,input,button):focus{outline:none; border-color:#8ab8ff; box-shadow:var(--glow)}
+    :where(select,input,button):active{transform: translateY(1px)}
+
+    /* Pretty checkbox chips */
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;background:var(--chip);border:1px solid var(--border);border-radius:999px;font-size:12px}
+    .tagRow,.chipsRow{display:flex;flex-wrap:wrap;gap:6px}.chipsRow{margin-top:6px}
+
+    /* Cards with dashed accents */
+    .planetCard,.stationCard,.beltCard{border:1px dashed #32508a;padding:10px;border-radius:12px;background:linear-gradient(180deg,rgba(16,28,64,.6),rgba(13,23,50,.55))}
+    .planetCard.match{border-color:var(--accent); box-shadow:0 0 0 2px rgba(110,168,254,.38), inset 0 0 24px rgba(110,168,254,.12)}
+    .hdr{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+    .hdr .name{font-weight:800}
+
+    .sysTitle{font-weight:900;margin:0;font-size:18px;letter-spacing:.2px}
+    .sysSub{margin:6px 0 10px 0;font-size:13px;color:var(--muted)}
+    .kv{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;font-size:13px}
+    .kv .k{color:var(--muted)} .kv .v{color:var(--fg);font-weight:600}
+
+    /* Double slider */
+    .double-slider{position:relative;padding:8px 0}
+    .double-slider input[type=range]{width:100%;background:transparent;appearance:none;position:absolute;left:0;right:0;top:0;height:28px;pointer-events:none}
+    .double-slider input[type=range]::-webkit-slider-thumb{pointer-events:auto;appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);border:2px solid #0b1020;box-shadow:0 0 0 2px rgba(113,169,255,.25)}
+    .double-slider .track{height:8px;background:linear-gradient(90deg,#22335f,#2b4180);border:1px solid #304a8a;border-radius:999px;position:relative}
+    .double-slider .fill{position:absolute;height:100%;background:linear-gradient(90deg,#71a9ff,#6ecdea);border-radius:999px;box-shadow:0 0 16px rgba(113,169,255,.35)}
+
+    /* Map area */
+    #mapWrap{position:relative;overflow:hidden}
+    #stars{position:absolute;inset:0;width:100%;height:100%;z-index:0}
+    #map{position:relative;z-index:1;width:100%;height:100%}
+    .tooltip{
+      position:absolute;pointer-events:none;transform:translate(-50%,-120%);
+      background:rgba(11,16,32,.92); border:1px solid var(--border); border-radius:10px; padding:8px 10px; font-size:12px;
+      white-space:nowrap; z-index:4; display:none; box-shadow:var(--shadow)
     }
-    .small { font-size: 12px; }
-    .kbd { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11px; padding: 1px 5px; border: 1px solid #2b375b; border-radius: 6px; background: #0a1228; }
+    /* Toolbar */
+    .toolbar{
+      position:absolute; right:12px; top:12px; z-index:3; display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+      background:rgba(15,24,52,.6); border:1px solid var(--border); padding:8px; border-radius:12px; backdrop-filter: blur(6px);
+    }
+    .toolchk{display:inline-flex;gap:6px;align-items:center;font-size:12px;color:var(--muted)}
+    .toolbar button{padding:8px 10px;border-radius:10px}
+    .toolbar .icon{width:18px;height:18px;display:inline-block}
+
+    /* SVG styling */
+    svg text{fill:var(--fg);font-size:11px;paint-order:stroke;stroke:#000;stroke-width:2px}
+    .cell{stroke:#0c132d;stroke-width:2.5px;opacity:.96}
+    .cell.highlight{stroke:#fff;stroke-width:4.5px;filter:drop-shadow(0 0 8px rgba(255,255,255,.45))}
+    .point{stroke:#000;stroke-width:2px}
+    .flash{animation:flash 1.6s ease-in-out 0s 2}
+    @keyframes flash{0%{stroke-width:2px}50%{stroke-width:7px}100%{stroke-width:2px}}
+    .edges path{stroke:#2e498a;stroke-opacity:.55;stroke-width:1.1px;fill:none}
+
+    /* Results list hover */
+    .result{cursor:pointer;border:1px solid transparent}
+    .result:hover{border-color:var(--accent);box-shadow:0 0 0 2px rgba(113,169,255,.18)}
   </style>
 </head>
 <body>
@@ -82,433 +139,787 @@
       <span class="pill"><strong id="abCount">—</strong> поясов</span>
     </div>
     <div class="row">
-      <label for="galaxySelect">Галактика:</label>
-      <select id="galaxySelect"></select>
+      <label for="galaxySelect" class="muted small">Галактика</label>
+      <select id="galaxySelect" style="min-width:200px"></select>
     </div>
-    <div class="row" style="grid-column: 1 / -1;">
-      <div class="row" style="gap:8px; flex-wrap: wrap;">
-        <input id="q" type="search" placeholder="Поиск по названию, расе, политике, ресурсам…" size="40" />
-        <label>Уровень планет ≥ <input id="plLevel" type="number" min="1" max="99" step="1" style="width:70px" /></label>
-        <label>Уровень станций ≥ <input id="stLevel" type="number" min="1" max="99" step="1" style="width:70px" /></label>
-        <label>Ресурсы (необит.) <input id="resTokens" type="text" placeholder="ferrum; cuprum; aurum" size="24" /></label>
-        <button id="runSearch" class="primary">Найти</button>
-        <button id="clearSearch" class="ghost">Сброс</button>
-      </div>
+    <div class="row">
+      <button id="loadLocal" class="ghost">Загрузить JSON…</button>
+      <input type="file" id="fileInput" accept="application/json" style="display:none" />
     </div>
   </header>
 
   <div id="content">
-    <div id="mapWrap">
-      <svg id="map" viewBox="0 0 1200 900" preserveAspectRatio="xMidYMid meet" aria-label="Карта"></svg>
-      <div class="tooltip" id="tip"></div>
-    </div>
-    <aside id="side">
-      <div>
-        <div class="row" style="justify-content: space-between;">
-          <div class="small muted">Результаты</div>
-          <div class="small muted">Навигация: клик — открыть; <span class="kbd">Esc</span> — очистить выделение</div>
+    <!-- LEFT: FILTERS -->
+    <aside id="filters" class="grid" style="gap:12px;">
+      <!-- GALAXY FILTER -->
+      <div class="blk">
+        <div class="hdrline">
+          <h3>Галактика</h3>
+          <label class="small muted"><input id="useGalaxy" type="checkbox" /> Использовать в поиске</label>
+        </div>
+        <label>Выбор галактики
+          <select id="galaxyFilter"><option value="">Любая</option></select>
+        </label>
+      </div>
+
+      <!-- SYSTEM FILTER -->
+      <div class="blk">
+        <div class="hdrline">
+          <h3>Система</h3>
+          <label class="small muted"><input id="useSystem" type="checkbox" /> Использовать в поиске</label>
+        </div>
+        <div class="grid">
+          <label>Название системы <input id="sysName" type="search" placeholder="например, Урсула" /></label>
+          <label class="chip"><input id="hasBelt" type="checkbox" /> Есть астероидный пояс</label>
         </div>
       </div>
-      <div id="details" class="list"></div>
+
+      <!-- PLANETS GENERIC -->
+      <div class="blk">
+        <div class="hdrline">
+          <h3>Планеты (общее)</h3>
+          <label class="small muted"><input id="usePlanets" type="checkbox" /> Использовать в поиске</label>
+        </div>
+        <div class="grid">
+          <label>Название <input id="plName" type="search" placeholder="например, Ниодолла" /></label>
+          <!-- просьба: уровень — на следующей строке -->
+          <div>
+            <div class="row" style="gap:6px;margin-top:6px">
+              <label>Уровень от <input id="plLvlMin" type="number" min="1" max="99" step="1" style="width:90px" /></label>
+              <label>до <input id="plLvlMax" type="number" min="1" max="99" step="1" style="width:90px" /></label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STATIONS -->
+      <div class="blk">
+        <div class="hdrline">
+          <h3>Станции</h3>
+          <label class="small muted"><input id="useStations" type="checkbox" /> Использовать в поиске</label>
+        </div>
+        <div class="grid">
+          <label>Тип станции
+            <select id="stType"><option value="">Любой</option></select>
+          </label>
+          <label>Название <input id="stName" type="search" placeholder="имя станции" /></label>
+          <div class="row" style="gap:6px;">
+            <label>Уровень от <input id="stLvlMin" type="number" min="1" max="99" step="1" style="width:90px" /></label>
+            <label>до <input id="stLvlMax" type="number" min="1" max="99" step="1" style="width:90px" /></label>
+          </div>
+        </div>
+      </div>
+
+      <!-- INHABITABLE -->
+      <div class="blk">
+        <div class="hdrline">
+          <h3>Необитаемые планеты</h3>
+          <label class="small muted"><input id="useInhabitable" type="checkbox" /> Использовать в поиске</label>
+        </div>
+        <div class="grid">
+          <label>Рельеф
+            <select id="terrainSelect"><option value="">Любой</option></select>
+          </label>
+
+          <div>
+            <div class="small muted" style="margin-bottom:6px;">Добываемые ресурсы — <b>все выбранные</b> должны быть на <b>одной</b> планете</div>
+            <div id="resBox" class="tagRow"></div>
+          </div>
+
+          <div class="grid">
+            <div class="small muted">Соотношение <span class="kbd">Холмы : Океаны : Равнины</span></div>
+            <div class="double-slider">
+              <div class="track">
+                <div id="rangeFill" class="fill" style="left:33%; right:34%;"></div>
+              </div>
+              <input id="splitA" type="range" min="0" max="100" step="1" value="33" />
+              <input id="splitB" type="range" min="0" max="100" step="1" value="66" />
+            </div>
+            <div class="chipsRow">
+              <span class="chip">Холмы: <span id="ratioH">33</span>%</span>
+              <span class="chip">Океаны: <span id="ratioO">33</span>%</span>
+              <span class="chip">Равнины: <span id="ratioP">34</span>%</span>
+            </div>
+            <label>Допуск по соотношению (0–100): <input id="ratioSim" type="range" min="0" max="100" step="1" value="0" /> <span id="ratioSimVal">0</span>%</label>
+            <div class="small muted">Если допуск = 0%, фильтр по соотношению не применяется.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="blk">
+        <div class="row" style="justify-content: space-between;">
+          <button id="runSearch" class="primary">Найти</button>
+          <button id="clearSearch" class="ghost">Сброс</button>
+        </div>
+      </div>
     </aside>
+
+    <!-- CENTER: MAP -->
+    <div id="mapWrap">
+      <canvas id="stars"></canvas>
+      <svg id="map" viewBox="0 0 1200 900" preserveAspectRatio="xMidYMid meet" aria-label="Карта"></svg>
+
+      <div class="toolbar" role="group" aria-label="Инструменты карты">
+        <button id="zoomIn" title="Приблизить">＋</button>
+        <button id="zoomOut" title="Отдалить">－</button>
+        <button id="zoomReset" class="ghost" title="Сброс масштаба">100%</button>
+        <label class="toolchk"><input type="checkbox" id="toggleEdges" checked> Рёбра</label>
+        <label class="toolchk"><input type="checkbox" id="toggleLabels" checked> Подписи</label>
+        <label class="toolchk"><input type="checkbox" id="togglePoints" checked> Точки</label>
+      </div>
+
+      <div class="tooltip" id="tip"></div>
+    </div>
+
+    <!-- RIGHT: RESULTS / DETAILS -->
+    <aside id="details"></aside>
+  </div>
+</div>
+
+<!-- Offline JSON loader -->
+<div id="loaderOverlay" style="position:fixed;inset:0;background:#0b1020f0;display:none;align-items:center;justify-content:center;z-index:20;">
+  <div id="loaderPanel" class="card" style="background:var(--panel-2);width:min(560px,92vw)">
+    <div class="grid" style="gap:10px">
+      <h2 style="margin:0">Загрузить данные</h2>
+      <div class="muted">Откройте локальный <code>data.json</code> с картой галактик. Панель появляется при запуске офлайн.</div>
+      <div><input type="file" id="overlayFileInput" accept="application/json" /></div>
+      <div id="overlayErr" class="small" style="color:#ff9aa9"></div>
+    </div>
   </div>
 </div>
 
 <script src="https://unpkg.com/d3@7"></script>
 <script src="https://unpkg.com/d3-delaunay@6"></script>
 <script>
-/** ====== Data loading ====== **/
+/** ===== Helpers ===== */
+const fmtInt = x => { try { return Number(x).toLocaleString('ru-RU'); } catch(e){ return x; } };
+const unique = arr => Array.from(new Set(arr));
+const textIncludes = (hay, needle) => String(hay||'').toLowerCase().includes(String(needle||'').toLowerCase());
+const parseTokens = t => (t||'').split(/[;,]/).map(s=>s.trim().toLowerCase()).filter(Boolean);
+function normVector(a,b,c){const aa=Math.max(0,a||0),bb=Math.max(0,b||0),cc=Math.max(0,c||0);const sum=aa+bb+cc;if(!sum)return[0,0,0];return[aa/sum,bb/sum,cc/sum]}
+function cosineSim(u,v){const dot=u[0]*v[0]+u[1]*v[1]+u[2]*v[2];const nu=Math.hypot(u[0],u[1],u[2]);const nv=Math.hypot(v[0],v[1],v[2]);return(!nu||!nv)?0:dot/(nu*nv)}
+
+/** ===== App State ===== */
 const STATE = {
-  data: null,
-  galaxyIndex: new Map(), // id -> galaxy
-  systemIndex: new Map(), // id -> { galaxyId, system }
-  currentGalaxyId: null,
-  lastHighlightId: null,
+  data:null,
+  galaxyIndex:new Map(),
+  systemIndex:new Map(),
+  currentGalaxyId:null,
+  lastHighlightId:null,
+  dict:{terrains:[],res:[],stTypes:[],galaxies:[]},
+  ratio:{h:33,o:33,p:34}
 };
 
-async function loadData() {
-  const res = await fetch('data.json');
-  if (!res.ok) throw new Error('Не удалось загрузить data.json');
-  const data = await res.json();
-  STATE.data = data;
+/** ===== SVG layers & zoom ===== */
+const svg = d3.select('#map');
+const gRoot   = svg.append('g').attr('id','root');  // everything inside zoom
+const gCells  = gRoot.append('g').attr('id','cells');
+const gEdges  = gRoot.append('g').attr('id','edges').attr('class','edges');
+const gPoints = gRoot.append('g').attr('id','points');
+const gLabels = gRoot.append('g').attr('id','labels');
+const tip = d3.select('#tip');
+let VIZ = { width:1200, height:900, scaleX:null, scaleY:null, galaxy:null, systems:null, delaunay:null, voronoi:null };
 
-  // Indexing
-  let sysCount = 0, plCount = 0, stCount = 0, abCount = 0;
-  data.galaxies.forEach(g => {
-    STATE.galaxyIndex.set(g.id, g);
-    g.systems.forEach(s => {
-      sysCount += 1;
-      plCount += s.planets.length;
-      stCount += s.stations.length;
-      abCount += s.asteroidBelts.length;
-      STATE.systemIndex.set(s.id, { galaxyId: g.id, system: s });
+const zoom = d3.zoom().scaleExtent([0.5, 4]).on('zoom', (ev)=>{
+  gRoot.attr('transform', ev.transform);
+});
+svg.call(zoom);
+
+/** ===== Starfield (static, lightweight) ===== */
+(function initStars(){
+  const cvs = document.getElementById('stars');
+  const ctx = cvs.getContext('2d');
+  const DPR = window.devicePixelRatio || 1;
+  function draw(){
+    const w = cvs.clientWidth, h = cvs.clientHeight;
+    cvs.width = Math.floor(w*DPR); cvs.height = Math.floor(h*DPR);
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    ctx.clearRect(0,0,w,h);
+    const count = Math.floor((w*h)/2200);
+    for(let i=0;i<count;i++){
+      const x=Math.random()*w, y=Math.random()*h;
+      const r=Math.random()*1.6+0.2;
+      const a=0.75*Math.random()+0.25;
+      ctx.fillStyle=`rgba(220,235,255,${a})`;
+      ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+    }
+    // subtle nebula haze
+    const grd = ctx.createRadialGradient(w*0.75,h*0.2,40,w*0.7,h*0.15,380);
+    grd.addColorStop(0,'rgba(110,173,254,.08)');
+    grd.addColorStop(1,'rgba(110,173,254,0)');
+    ctx.fillStyle = grd; ctx.beginPath(); ctx.rect(0,0,w,h); ctx.fill();
+  }
+  new ResizeObserver(draw).observe(cvs);
+  draw();
+})();
+
+/** ===== Data loading (online/offline) ===== */
+async function tryFetchDefault(){
+  const isFile = location.protocol === 'file:'; if(isFile) throw new Error('Local file mode');
+  const res = await fetch('data.json',{cache:'no-store'}); if(!res.ok) throw new Error('HTTP '+res.status);
+  return await res.json();
+}
+function parseLoadedJson(text){
+  const data = JSON.parse(text);
+  if(!data || !Array.isArray(data.galaxies)) throw new Error('Неверный формат: нет массива galaxies');
+  return data;
+}
+function bindFileInputs(){
+  const fileInput = document.getElementById('fileInput');
+  const overlayInput = document.getElementById('overlayFileInput');
+  const overlay = document.getElementById('loaderOverlay');
+  const overlayErr = document.getElementById('overlayErr');
+
+  document.getElementById('loadLocal').addEventListener('click',()=>fileInput.click());
+  function handleFile(el, fromOverlay=false){
+    const f = el.files && el.files[0]; if(!f) return;
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      try{
+        const data = parseLoadedJson(reader.result);
+        onDataLoaded(data);
+        if(fromOverlay){ overlay.style.display='none'; overlayErr.textContent=''; }
+      }catch(err){
+        if(fromOverlay) overlayErr.textContent = String(err.message||err);
+        else alert(err.message||err);
+      }
+    };
+    reader.readAsText(f,'utf-8');
+  }
+  fileInput.addEventListener('change',()=>handleFile(fileInput,false));
+  overlayInput.addEventListener('change',()=>handleFile(overlayInput,true));
+}
+function showOverlay(){ document.getElementById('loaderOverlay').style.display='flex'; }
+async function loadData(){
+  bindFileInputs();
+  try{
+    const data = await tryFetchDefault();
+    onDataLoaded(data);
+  }catch(err){ showOverlay(); }
+}
+
+/** ===== UI dictionaries & counts ===== */
+function onDataLoaded(data){
+  STATE.data = data; STATE.galaxyIndex.clear(); STATE.systemIndex.clear();
+  let sysCount=0, plCount=0, stCount=0, abCount=0;
+  const galaxyOptions=[];
+  data.galaxies.forEach(g=>{
+    STATE.galaxyIndex.set(g.id,g);
+    galaxyOptions.push({id:g.id,name:g.name||g.id});
+    (g.systems||[]).forEach(s=>{
+      sysCount++; plCount += (s.planets||[]).length; stCount += (s.stations||[]).length; abCount += (s.asteroidBelts||[]).length;
+      STATE.systemIndex.set(s.id,{galaxyId:g.id, system:s});
     });
   });
-
-  // Counters
+  STATE.dict.galaxies = galaxyOptions;
   d3.select('#galCount').text(data.galaxies.length);
   d3.select('#sysCount').text(sysCount);
   d3.select('#plCount').text(plCount);
   d3.select('#stCount').text(stCount);
   d3.select('#abCount').text(abCount);
 
-  // Galaxy select
-  const sel = d3.select('#galaxySelect');
-  sel.selectAll('option')
-    .data(data.galaxies)
-    .join('option')
-    .attr('value', d => d.id)
-    .text(d => d.name || d.id);
+  // Build dictionaries
+  const terrains=[], res=[], stTypes=[];
+  data.galaxies.forEach(g=>(g.systems||[]).forEach(s=>{
+    (s.planets||[]).forEach(p=>{
+      if(p.category==='inhabitable'){
+        if(p.terrain) terrains.push(String(p.terrain));
+        (p.resources||[]).forEach(r=>res.push(String(r)));
+      }
+    });
+    (s.stations||[]).forEach(t=>{ if(t.type) stTypes.push(String(t.type)); });
+  }));
+  STATE.dict.terrains = unique(terrains).sort((a,b)=>a.localeCompare(b));
+  STATE.dict.res = unique(res).sort((a,b)=>a.localeCompare(b));
+  STATE.dict.stTypes = unique(stTypes).sort((a,b)=>a.localeCompare(b));
 
-  sel.on('change', () => {
+  buildFiltersUI();
+
+  // Header galaxy select
+  const sel = d3.select('#galaxySelect');
+  sel.selectAll('option').data(data.galaxies).join('option')
+     .attr('value',d=>d.id).text(d=>d.name||d.id);
+  sel.on('change',()=>{
     const val = sel.property('value');
     showGalaxy(val);
-    updateHash({ galaxy: val });
+    updateHash({galaxy:val, system:''});
+    renderDetailsEmpty();
   });
 
-  // Hash deep-link
-  const params = new URLSearchParams(location.hash.replace(/^#/, ''));
+  // Deep link
+  const params = new URLSearchParams(location.hash.replace(/^#/,''));
   const gFromHash = params.get('galaxy');
   const sFromHash = params.get('system');
   const defaultGalaxy = gFromHash && STATE.galaxyIndex.has(gFromHash) ? gFromHash : data.galaxies[0].id;
   sel.property('value', defaultGalaxy);
-  showGalaxy(defaultGalaxy, () => {
-    if (sFromHash && STATE.systemIndex.has(sFromHash)) {
-      highlightSystem(sFromHash, true);
-    }
+  showGalaxy(defaultGalaxy, ()=>{
+    if(sFromHash && STATE.systemIndex.has(sFromHash)){
+      highlightSystem(sFromHash);
+      renderSystemDetails(STATE.systemIndex.get(sFromHash).system, []);
+    }else renderDetailsEmpty();
   });
 
-  // Search handlers
+  // Search & sliders
   d3.select('#runSearch').on('click', runSearch);
   d3.select('#clearSearch').on('click', clearSearch);
-  d3.select('#q').on('keydown', (e) => { if (e.key === 'Enter') runSearch(); });
-  window.addEventListener('keydown', (e) => { if (e.key === 'Escape') clearHighlight(); });
+  const a=document.getElementById('splitA'), b=document.getElementById('splitB');
+  const fill=document.getElementById('rangeFill');
+  const outH=document.getElementById('ratioH'), outO=document.getElementById('ratioO'), outP=document.getElementById('ratioP');
+  const sim=document.getElementById('ratioSim'), simVal=document.getElementById('ratioSimVal');
+
+  function updateDouble(){
+    if(+a.value > +b.value){ const t=a.value; a.value=b.value; b.value=t; }
+    const A=+a.value, B=+b.value;
+    const H=Math.round(A), O=Math.round(B-A), P=Math.round(100-B);
+    fill.style.left=A+'%'; fill.style.right=(100-B)+'%';
+    outH.textContent=H; outO.textContent=O; outP.textContent=P;
+    STATE.ratio={h:H,o:O,p:P};
+  }
+  a.addEventListener('input',updateDouble);
+  b.addEventListener('input',updateDouble);
+  sim.addEventListener('input',()=>simVal.textContent=sim.value);
+  updateDouble();
+
+  // Toolbar toggles
+  document.getElementById('toggleEdges').addEventListener('change',e=>{
+    gEdges.attr('display', e.target.checked ? null : 'none');
+  });
+  document.getElementById('toggleLabels').addEventListener('change',e=>{
+    gLabels.attr('display', e.target.checked ? null : 'none');
+  });
+  document.getElementById('togglePoints').addEventListener('change',e=>{
+    gPoints.attr('display', e.target.checked ? null : 'none');
+  });
+
+  const zi=document.getElementById('zoomIn'), zo=document.getElementById('zoomOut'), zr=document.getElementById('zoomReset');
+  zi.addEventListener('click',()=>svg.transition().duration(180).call(zoom.scaleBy, 1.2));
+  zo.addEventListener('click',()=>svg.transition().duration(180).call(zoom.scaleBy, 1/1.2));
+  zr.addEventListener('click',()=>svg.transition().duration(220).call(zoom.transform, d3.zoomIdentity));
 }
 
-function updateHash({ galaxy, system }) {
-  const params = new URLSearchParams(location.hash.replace(/^#/, ''));
-  if (galaxy !== undefined) params.set('galaxy', galaxy);
-  if (system !== undefined) params.set('system', system);
+function buildFiltersUI(){
+  // Galaxy filter dropdown
+  d3.select('#galaxyFilter').selectAll('option.extra')
+    .data(STATE.dict.galaxies).join(
+      enter=>enter.append('option').attr('class','extra').attr('value',d=>d.id).text(d=>d.name)
+    );
+  // Station types
+  d3.select('#stType').selectAll('option.extra')
+    .data(STATE.dict.stTypes).join(
+      enter=>enter.append('option').attr('class','extra').attr('value',d=>d).text(d=>d)
+    );
+  // Terrain
+  d3.select('#terrainSelect').selectAll('option.extra')
+    .data(STATE.dict.terrains).join(
+      enter=>enter.append('option').attr('class','extra').attr('value',d=>d).text(d=>d)
+    );
+  // Resources as chips
+  const box = d3.select('#resBox');
+  const items = box.selectAll('label.res').data(STATE.dict.res).join('label').attr('class','res chip');
+  items.html(d=>`<input type="checkbox" value="${d}"> ${d}`);
+}
+
+function updateHash({galaxy,system}){
+  const params = new URLSearchParams(location.hash.replace(/^#/,''));
+  if(galaxy!==undefined) params.set('galaxy',galaxy);
+  if(system!==undefined){ if(system) params.set('system',system); else params.delete('system'); }
   location.hash = params.toString();
 }
 
-/** ====== Rendering Voronoi ====== **/
-const svg = d3.select('#map');
-const gCells = svg.append('g').attr('id', 'cells');
-const gPoints = svg.append('g').attr('id', 'points');
-const gLabels = svg.append('g').attr('id', 'labels');
-const tip = d3.select('#tip');
-
-let VIZ = { width: 1200, height: 900, scaleX: null, scaleY: null, galaxy: null, systems: null, delaunay: null, voronoi: null };
-
-function showGalaxy(galaxyId, callback) {
-  const galaxy = STATE.galaxyIndex.get(galaxyId);
+/** ===== Map Rendering (with animation/edges/contrast) ===== */
+function showGalaxy(galaxyId, callback){
+  const galaxy = STATE.galaxyIndex.get(galaxyId); if(!galaxy) return;
   STATE.currentGalaxyId = galaxyId;
-  VIZ.galaxy = galaxy;
 
-  // Prepare points
-  const systems = galaxy.systems.filter(s => Number.isFinite(s.x) && Number.isFinite(s.y));
-  VIZ.systems = systems;
+  const systems = (galaxy.systems||[]).filter(s=>Number.isFinite(s.x)&&Number.isFinite(s.y));
+  VIZ.galaxy=galaxy; VIZ.systems=systems;
 
-  // Build scales based on system_x / system_y extents
-  const pad = 40;
-  const xExtent = d3.extent(systems, d => d.x);
-  const yExtent = d3.extent(systems, d => d.y);
-  const xScale = d3.scaleLinear().domain(xExtent).range([pad, VIZ.width - pad]);
-  const yScale = d3.scaleLinear().domain(yExtent).range([VIZ.height - pad, pad]); // invert Y for svg
+  const pad=40;
+  const xExtent=d3.extent(systems,d=>d.x), yExtent=d3.extent(systems,d=>d.y);
+  const xScale=d3.scaleLinear().domain(xExtent).range([pad,VIZ.width-pad]);
+  const yScale=d3.scaleLinear().domain(yExtent).range([VIZ.height-pad,pad]);
+  VIZ.scaleX=xScale; VIZ.scaleY=yScale;
 
-  VIZ.scaleX = xScale;
-  VIZ.scaleY = yScale;
-
-  const points = systems.map(s => [xScale(s.x), yScale(s.y)]);
+  const points = systems.map(s=>[xScale(s.x),yScale(s.y)]);
   VIZ.delaunay = d3.Delaunay.from(points);
-  VIZ.voronoi = VIZ.delaunay.voronoi([0, 0, VIZ.width, VIZ.height]);
+  VIZ.voronoi = VIZ.delaunay.voronoi([0,0,VIZ.width,VIZ.height]);
 
-  // Draw cells
   const colorMap = d3.scaleOrdinal()
-    .domain([...new Set(systems.map(s => s.color || 'gray'))])
-    .range(['#5b8def','#5fd38d','#c77dff','#ff6b6b','#ffa94d','#74c0fc','#51cf66','#fcc419','#f06595']); // robust palette
+    .domain([...new Set(systems.map(s=>s.color||'gray'))])
+    .range(['#5b8def','#5fd38d','#c77dff','#ff6b6b','#ffa94d','#74c0fc','#51cf66','#fcc419','#f06595']);
 
-  const cells = gCells.selectAll('path')
-    .data(systems, d => d.id);
-
+  // ===== Cells =====
+  const cells = gCells.selectAll('path').data(systems, d=>d.id);
   cells.join(
     enter => enter.append('path')
-      .attr('class', 'cell')
-      .attr('id', d => `cell-${d.id}`)
-      .attr('d', (d, i) => VIZ.voronoi.renderCell(i))
-      .attr('fill', d => colorMap(d.color || 'gray'))
-      .on('mousemove', (event, d) => showTip(event, d))
-      .on('mouseleave', hideTip)
-      .on('click', (_, d) => { selectSystem(d.id); }),
+      .attr('class','cell')
+      .attr('id',d=>`cell-${d.id}`)
+      .attr('d',(_,i)=>VIZ.voronoi.renderCell(i))
+      .attr('fill',d=>colorMap(d.color||'gray'))
+      .attr('opacity',0)
+      .on('mousemove',(event,d)=>showTip(event,d))
+      .on('mouseleave',hideTip)
+      .on('click',(_,d)=>selectSystem(d.id,[]))
+      .call(e => e.transition().duration(600).attr('opacity',1)),
     update => update
-      .attr('d', (d, i) => VIZ.voronoi.renderCell(i))
-      .attr('fill', d => colorMap(d.color || 'gray')),
+      .attr('d',(_,i)=>VIZ.voronoi.renderCell(i))
+      .attr('fill',d=>colorMap(d.color||'gray'))
+      .attr('opacity',1),
     exit => exit.remove()
   );
 
-  // Points
-  const pts = gPoints.selectAll('circle').data(systems, d => d.id);
+  // ===== Edges (Delaunay links) =====
+  const edges = gEdges.selectAll('path').data([0]);
+  edges.join(
+    enter => enter.append('path')
+      .attr('d', VIZ.delaunay.render())
+      .attr('fill', 'none')
+      .attr('stroke-dasharray',3)
+      .attr('stroke-dashoffset',15)
+      .call(e=>e.transition().duration(800).attr('stroke-dashoffset',0)),
+    update => update.attr('d', VIZ.delaunay.render())
+  );
+
+  // ===== Points =====
+  const pts = gPoints.selectAll('circle').data(systems, d=>d.id);
   pts.join(
     enter => enter.append('circle')
-      .attr('class', 'point')
-      .attr('id', d => `pt-${d.id}`)
-      .attr('r', 6)
-      .attr('cx', d => xScale(d.x))
-      .attr('cy', d => yScale(d.y))
-      .attr('fill', '#ffffff')
-      .on('mousemove', (event, d) => showTip(event, d))
-      .on('mouseleave', hideTip)
-      .on('click', (_, d) => { selectSystem(d.id); }),
-    update => update
-      .attr('cx', d => xScale(d.x))
-      .attr('cy', d => yScale(d.y)),
+      .attr('class','point')
+      .attr('id',d=>`pt-${d.id}`)
+      .attr('r',8)
+      .attr('cx',d=>xScale(d.x))
+      .attr('cy',d=>yScale(d.y))
+      .attr('fill','#ffffff')
+      .on('mousemove',(event,d)=>showTip(event,d))
+      .on('mouseleave',hideTip)
+      .on('click',(_,d)=>selectSystem(d.id,[])),
+    update => update.attr('cx',d=>xScale(d.x)).attr('cy',d=>yScale(d.y)),
     exit => exit.remove()
   );
 
-  // Labels
-  const labels = gLabels.selectAll('text').data(systems, d => d.id);
+  // ===== Labels =====
+  const labels = gLabels.selectAll('text').data(systems, d=>d.id);
   labels.join(
     enter => enter.append('text')
-      .attr('x', d => xScale(d.x) + 8)
-      .attr('y', d => yScale(d.y) - 8)
-      .text(d => d.name || d.id)
-      .attr('opacity', 0.85),
+      .attr('x',d=>xScale(d.x)+10)
+      .attr('y',d=>yScale(d.y)-10)
+      .text(d=>d.name||d.id)
+      .attr('opacity',0)
+      .call(e=>e.transition().duration(400).attr('opacity',.9)),
     update => update
-      .attr('x', d => xScale(d.x) + 8)
-      .attr('y', d => yScale(d.y) - 8)
-      .text(d => d.name || d.id),
+      .attr('x',d=>xScale(d.x)+10)
+      .attr('y',d=>yScale(d.y)-10)
+      .text(d=>d.name||d.id)
+      .attr('opacity',.9),
     exit => exit.remove()
   );
 
   clearHighlight();
-  if (typeof callback === 'function') callback();
+  if(typeof callback === 'function') callback();
 }
 
-function showTip(event, sys) {
-  const planets = sys.planets.length;
-  const stations = sys.stations.length;
-  const belts = sys.asteroidBelts.length;
-  tip.style('display', 'block')
-     .style('left', (event.clientX) + 'px')
-     .style('top', (event.clientY) + 'px')
-     .html(`<strong>${sys.name || sys.id}</strong><br><span class="muted">Контроль:</span> ${sys.control || '—'}<br><span class="muted">Планет:</span> ${planets} • <span class="muted">Станций:</span> ${stations} • <span class="muted">Поясов:</span> ${belts}`);
+function showTip(event, s){
+  const planets=(s.planets||[]).length, stations=(s.stations||[]).length, belts=(s.asteroidBelts||[]).length;
+  tip.style('display','block')
+     .style('left',(event.clientX)+'px')
+     .style('top',(event.clientY)+'px')
+     .html(`<div><strong>${s.name||s.id}</strong></div>
+            <div class="small muted">Планет: ${planets} • Станций: ${stations} • Поясов: ${belts}</div>`);
 }
-function hideTip() { tip.style('display', 'none'); }
+function hideTip(){ tip.style('display','none'); }
 
-/** ====== Selection / Details ====== **/
-function selectSystem(systemId) {
-  const ref = STATE.systemIndex.get(systemId);
-  if (!ref) return;
-  if (ref.galaxyId !== STATE.currentGalaxyId) {
-    // Switch galaxy and then select
-    d3.select('#galaxySelect').property('value', ref.galaxyId);
-    showGalaxy(ref.galaxyId, () => highlightSystem(systemId, false));
-  } else {
-    highlightSystem(systemId, false);
+/** ===== Selection & Details ===== */
+function selectSystem(systemId, highlightPlanetIds){
+  const ref = STATE.systemIndex.get(systemId); if(!ref) return;
+  const targetGalaxyId = ref.galaxyId;
+  if(targetGalaxyId !== STATE.currentGalaxyId){
+    d3.select('#galaxySelect').property('value', targetGalaxyId);
+    showGalaxy(targetGalaxyId, ()=>{
+      highlightSystem(systemId);
+      renderSystemDetails(ref.system, highlightPlanetIds||[]);
+    });
+  }else{
+    highlightSystem(systemId);
+    renderSystemDetails(ref.system, highlightPlanetIds||[]);
   }
-  updateHash({ system: systemId });
-  renderDetails([ref.system], { header: 'Выбрана система' });
+  updateHash({system:systemId});
 }
-
-function clearHighlight() {
-  if (STATE.lastHighlightId) {
-    d3.select(`#cell-${STATE.lastHighlightId}`).classed('highlight', false);
-    d3.select(`#pt-${STATE.lastHighlightId}`).classed('flash', false);
+function clearHighlight(){
+  if(STATE.lastHighlightId){
+    d3.select(`#cell-${STATE.lastHighlightId}`).classed('highlight',false);
+    d3.select(`#pt-${STATE.lastHighlightId}`).classed('flash',false);
   }
-  STATE.lastHighlightId = null;
+  STATE.lastHighlightId=null;
 }
-
-function highlightSystem(systemId, centerAndOpen) {
+function highlightSystem(systemId){
   clearHighlight();
-  STATE.lastHighlightId = systemId;
-  d3.select(`#cell-${systemId}`).classed('highlight', true);
-  d3.select(`#pt-${systemId}`).classed('flash', true);
+  STATE.lastHighlightId=systemId;
+  d3.select(`#cell-${systemId}`).classed('highlight',true);
+  d3.select(`#pt-${systemId}`).classed('flash',true);
 }
 
-/** ====== Search ====== **/
-function parseTokens(text) {
-  if (!text) return [];
-  return text.split(/[;,]/).map(t => t.trim().toLowerCase()).filter(Boolean);
+function renderDetailsEmpty(){
+  const wrap=d3.select('#details'); wrap.html('');
+  const note=document.createElement('div'); note.className='muted small';
+  note.textContent='Включите флажки «Использовать в поиске» для нужных блоков и задайте параметры.';
+  wrap.node().appendChild(note);
 }
 
-function runSearch() {
-  const q = d3.select('#q').property('value').trim().toLowerCase();
-  const plLevel = parseInt(d3.select('#plLevel').property('value') || '0', 10);
-  const stLevel = parseInt(d3.select('#stLevel').property('value') || '0', 10);
-  const resTokens = parseTokens(d3.select('#resTokens').property('value'));
+function renderSystemDetails(s, highlightPlanetIds){
+  const wrap=d3.select('#details'); wrap.html('');
 
-  const matches = [];
+  const head=document.createElement('div'); head.className='card';
+  head.innerHTML = `<div class="sysTitle">${s.name||s.id}</div>
+                    <div class="sysSub">Цвет: ${s.color||'—'} • Тип: ${s.type||'—'}</div>`;
+  wrap.node().appendChild(head);
 
-  STATE.data.galaxies.forEach(g => {
-    g.systems.forEach(s => {
-      // broad text match on system / planet / station names + fields
-      let textHit = false;
-      if (q) {
-        const corpus = [
-          s.name, s.control, s.type, s.color,
-          ...s.planets.flatMap(p => [p.name, p.category, p.economics, p.politics, p.race, ...(p.resources || [])]),
-          ...s.stations.flatMap(t => [t.name, t.type, t.race])
-        ].filter(Boolean).join(' ').toLowerCase();
-        textHit = corpus.includes(q);
+  const blkInfo=document.createElement('div'); blkInfo.className='blk';
+  blkInfo.innerHTML=`<div class="hdrline"><h3>Система</h3></div>`;
+  const kv=document.createElement('div'); kv.className='kv';
+  [['Координаты X', s.x],['Координаты Y', s.y],['Координаты Z', s.z],
+   ['Размер', s.size],['Планеты', (s.planets||[]).length],
+   ['Станции',(s.stations||[]).length],['Пояса',(s.asteroidBelts||[]).length]
+  ].forEach(([k,v])=>{
+    const kEl=document.createElement('div'); kEl.className='k'; kEl.textContent=k;
+    const vEl=document.createElement('div'); vEl.className='v'; vEl.textContent=(v??'—');
+    kv.appendChild(kEl); kv.appendChild(vEl);
+  });
+  blkInfo.appendChild(kv); wrap.node().appendChild(blkInfo);
+
+  const highlightSet=new Set(highlightPlanetIds||[]);
+  // Planets
+  const blkPl=document.createElement('div'); blkPl.className='blk';
+  blkPl.innerHTML=`<div class="hdrline"><h3>Планеты</h3></div>`;
+  const plGrid=document.createElement('div'); plGrid.className='grid'; plGrid.style.gap='8px';
+  (s.planets||[]).forEach(p=>{
+    const card=document.createElement('div'); card.className='planetCard'; if(highlightSet.has(p.id)) card.classList.add('match');
+    const hdr=document.createElement('div'); hdr.className='hdr';
+    const left=document.createElement('div'); left.className='name'; left.textContent=p.name||p.id||'Планета';
+    const right=document.createElement('div'); right.className='small muted'; right.textContent=(p.category==='habitable'?'Обитаема':(p.category==='inhabitable'?'Необитаема':(p.category||'')));
+    hdr.appendChild(left); hdr.appendChild(right); card.appendChild(hdr);
+    const kvp=document.createElement('div'); kvp.className='kv';
+    if(p.category==='habitable'){
+      [['Уровень', Number.isFinite(p.level)?p.level:'—'],['Раса',p.race||'—'],['Экономика',p.economics||'—'],['Политика',p.politics||'—'],['Население',(p.population!=null?fmtInt(p.population):'—')]]
+      .forEach(([k,v])=>{const kEl=document.createElement('div');kEl.className='k';kEl.textContent=k;const vEl=document.createElement('div');vEl.className='v';vEl.textContent=v;kvp.appendChild(kEl);kvp.appendChild(vEl);});
+      card.appendChild(kvp);
+    }else{
+      [['Рельеф',p.terrain||'—'],['Холмы',p.hills||'—'],['Океаны',p.oceans||'—'],['Равнины',p.plains||'—']]
+      .forEach(([k,v])=>{const kEl=document.createElement('div');kEl.className='k';kEl.textContent=k;const vEl=document.createElement('div');vEl.className='v';vEl.textContent=v;kvp.appendChild(kEl);kvp.appendChild(vEl);});
+      card.appendChild(kvp);
+    }
+    if(p.resources&&p.resources.length){
+      const tags=document.createElement('div'); tags.className='tagRow'; tags.style.marginTop='6px';
+      p.resources.forEach(r=>{const chip=document.createElement('span'); chip.className='chip'; chip.textContent=r; tags.appendChild(chip);});
+      card.appendChild(tags);
+    }
+    plGrid.appendChild(card);
+  });
+  blkPl.appendChild(plGrid); wrap.node().appendChild(blkPl);
+
+  // Stations
+  const blkSt=document.createElement('div'); blkSt.className='blk';
+  blkSt.innerHTML=`<div class="hdrline"><h3>Станции</h3></div>`;
+  const stGrid=document.createElement('div'); stGrid.className='grid'; stGrid.style.gap='8px';
+  (s.stations||[]).forEach(t=>{
+    const card=document.createElement('div'); card.className='stationCard';
+    const hdr=document.createElement('div'); hdr.className='hdr';
+    const line=document.createElement('div'); line.className='name small';
+    const parts=[]; parts.push(t.type||'тип?'); parts.push('—'); parts.push(t.name||t.id||'Станция');
+    if(Number.isFinite(t.level)) parts.push(`— ур. ${t.level}`); if(t.race) parts.push(`— ${t.race}`);
+    line.textContent=parts.join(' ');
+    hdr.appendChild(line); card.appendChild(hdr);
+    stGrid.appendChild(card);
+  });
+  blkSt.appendChild(stGrid); wrap.node().appendChild(blkSt);
+
+  // Belts
+  const blkAb=document.createElement('div'); blkAb.className='blk';
+  blkAb.innerHTML=`<div class="hdrline"><h3>Астероидные пояса</h3></div>`;
+  const abGrid=document.createElement('div'); abGrid.className='grid'; abGrid.style.gap='8px';
+  (s.asteroidBelts||[]).forEach(b=>{
+    const card=document.createElement('div'); card.className='beltCard';
+    const hdr=document.createElement('div'); hdr.className='hdr';
+    const left=document.createElement('div'); left.className='name small';
+    left.textContent=`Пояс${Number.isFinite(b.count)?` • полей: ${b.count}`:''}${b.distance?` • дистанция: ${b.distance}`:''}`;
+    hdr.appendChild(left); card.appendChild(hdr);
+    if(b.resources&&b.resources.length){
+      const tags=document.createElement('div'); tags.className='tagRow';
+      b.resources.forEach(r=>{const chip=document.createElement('span'); chip.className='chip'; chip.textContent=r; tags.appendChild(chip);});
+      card.appendChild(tags);
+    }
+    abGrid.appendChild(card);
+  });
+  blkAb.appendChild(abGrid); wrap.node().appendChild(blkAb);
+
+  // Scroll to first highlighted planet card if any
+  if(highlightPlanetIds && highlightPlanetIds.length){
+    const first=document.querySelector('.planetCard.match'); if(first) first.scrollIntoView({behavior:'smooth', block:'center'});
+  }
+}
+
+/** ===== Search ===== */
+function getFilters(){
+  const useGalaxy=document.getElementById('useGalaxy').checked;
+  const useSystem=document.getElementById('useSystem').checked;
+  const usePlanets=document.getElementById('usePlanets').checked;
+  const useStations=document.getElementById('useStations').checked;
+  const useInhabitable=document.getElementById('useInhabitable').checked;
+
+  const galaxyId=document.getElementById('galaxyFilter').value;
+
+  const sysName=document.getElementById('sysName').value.trim();
+  const hasBelt=document.getElementById('hasBelt').checked;
+
+  const plName=document.getElementById('plName').value.trim();
+  const plLvlMin=parseInt(document.getElementById('plLvlMin').value||'');
+  const plLvlMax=parseInt(document.getElementById('plLvlMax').value||'');
+
+  const stType=document.getElementById('stType').value;
+  const stName=document.getElementById('stName').value.trim();
+  const stLvlMin=parseInt(document.getElementById('stLvlMin').value||'');
+  const stLvlMax=parseInt(document.getElementById('stLvlMax').value||'');
+
+  const terrain=document.getElementById('terrainSelect').value;
+  const resChecked=Array.from(document.querySelectorAll('#resBox input[type="checkbox"]:checked')).map(el=>el.value.toLowerCase());
+
+  const ratioSim=parseInt(document.getElementById('ratioSim').value,10); // 0..100
+  const ratio=STATE.ratio;
+
+  return {useGalaxy,useSystem,usePlanets,useStations,useInhabitable,galaxyId,sysName,hasBelt,plName,plLvlMin,plLvlMax,stType,stName,stLvlMin,stLvlMax,terrain,resChecked,ratioSim,ratio};
+}
+
+function planetHasAllResources(p, want){
+  const have=(p.resources||[]).map(r=>String(r).toLowerCase());
+  return want.every(w=>have.includes(w));
+}
+
+function approxMatchHOP_byRatio(p, ratioPct, thresholdPct){
+  if(thresholdPct<=0) return true;
+  if(p.category!=='inhabitable') return false;
+  const ph=parseFloat(p.hills||0), po=parseFloat(p.oceans||0), pp=parseFloat(p.plains||0);
+  const v=normVector(ph,po,pp), t=normVector(ratioPct.h,ratioPct.o,ratioPct.p);
+  const sim=cosineSim(v,t); const pct=Math.round(sim*100);
+  return pct>=thresholdPct;
+}
+
+function getPlanetName(s,id){ const p=(s.planets||[]).find(pp=>pp.id===id); return p?(p.name||p.id):id; }
+
+function runSearch(){
+  const f=getFilters();
+  const anyUse=f.useGalaxy||f.useSystem||f.usePlanets||f.useStations||f.useInhabitable;
+  const entries=[];
+  if(!anyUse) { renderDetailsEmpty(); return; }
+
+  STATE.data.galaxies.forEach(g=>(g.systems||[]).forEach(s=>{
+    let ok=true; const reasons=[]; const matchedPlanetIds=new Set();
+
+    if(f.useGalaxy && f.galaxyId){ if(g.id!==f.galaxyId) ok=false; else reasons.push(`Галактика: ${(g.name||g.id)}`); }
+
+    if(ok && f.useSystem){
+      if(f.sysName){ if(!textIncludes(s.name,f.sysName)) ok=false; else reasons.push(`Система: “${f.sysName}”`); }
+      if(ok && f.hasBelt){ if(!((s.asteroidBelts||[]).length>0)) ok=false; else reasons.push('Есть астероидный пояс'); }
+    }
+
+    if(ok && f.usePlanets){
+      if(f.plName){
+        const ps=(s.planets||[]).filter(p=>textIncludes(p.name,f.plName));
+        if(!ps.length) ok=false; else { reasons.push(`Планета: “${f.plName}”`); ps.forEach(p=>matchedPlanetIds.add(p.id)); }
       }
-
-      // Planet level filter
-      let planetLevelHit = false;
-      if (plLevel > 0) {
-        planetLevelHit = s.planets.some(p => Number.isFinite(p.level) && p.level >= plLevel);
-      }
-
-      // Station level filter
-      let stationLevelHit = false;
-      if (stLevel > 0) {
-        stationLevelHit = s.stations.some(t => Number.isFinite(t.level) && t.level >= stLevel);
-      }
-
-      // Uninhabited planet by resources filter
-      let resourceHit = false;
-      if (resTokens.length > 0) {
-        resourceHit = s.planets.some(p => (p.category === 'inhabitable') && (p.resources || []).some(r => resTokens.includes(String(r).toLowerCase())));
-        // Also belts resources
-        if (!resourceHit) {
-          resourceHit = s.asteroidBelts.some(b => (b.resources || []).some(r => resTokens.includes(String(r).toLowerCase())));
+      if(ok && (!isNaN(f.plLvlMin)||!isNaN(f.plLvlMax))){
+        const ps=(s.planets||[]).filter(p=>{
+          const lvl=Number.isFinite(p.level)?p.level:null;
+          if(lvl==null) return false;
+          if(!isNaN(f.plLvlMin) && lvl<f.plLvlMin) return false;
+          if(!isNaN(f.plLvlMax) && lvl>f.plLvlMax) return false;
+          return true;
+        });
+        if(!ps.length) ok=false; else {
+          const rangeText=`Уровень планеты ${!isNaN(f.plLvlMin)?'≥ '+f.plLvlMin:''}${(!isNaN(f.plLvlMin)&&!isNaN(f.plLvlMax))?' и ':''}${!isNaN(f.plLvlMax)?'≤ '+f.plLvlMax:''}`.trim();
+          reasons.push(rangeText); ps.forEach(p=>matchedPlanetIds.add(p.id));
         }
       }
+    }
 
-      const any =
-        (q && textHit) ||
-        (plLevel > 0 && planetLevelHit) ||
-        (stLevel > 0 && stationLevelHit) ||
-        (resTokens.length > 0 && resourceHit);
-
-      if (any) {
-        // Build list of "why matched"
-        const reasons = [];
-        if (plLevel > 0 && planetLevelHit) reasons.push(`Планеты уровня ≥ ${plLevel}`);
-        if (stLevel > 0 && stationLevelHit) reasons.push(`Станции уровня ≥ ${stLevel}`);
-        if (resTokens.length > 0 && resourceHit) reasons.push(`Ресурсы: ${resTokens.join(', ')}`);
-        if (q && textHit) reasons.push(`Текстовое совпадение: «${q}»`);
-        matches.push({ galaxyId: g.id, system: s, reasons });
+    if(ok && f.useStations){
+      if(f.stType){ const hit=(s.stations||[]).some(t=>t.type===f.stType); if(!hit) ok=false; else reasons.push(`Тип станции: ${f.stType}`); }
+      if(ok && f.stName){ const hit=(s.stations||[]).some(t=>textIncludes(t.name,f.stName)); if(!hit) ok=false; else reasons.push(`Станция: “${f.stName}”`); }
+      if(ok && (!isNaN(f.stLvlMin)||!isNaN(f.stLvlMax))){
+        const hit=(s.stations||[]).some(t=>{
+          const lvl=Number.isFinite(t.level)?t.level:null;
+          if(lvl==null) return false;
+          if(!isNaN(f.stLvlMin)&&lvl<f.stLvlMin) return false;
+          if(!isNaN(f.stLvlMax)&&lvl>f.stLvlMax) return false;
+          return true;
+        });
+        if(!hit) ok=false; else reasons.push(`Уровень станции ${!isNaN(f.stLvlMin)?'≥ '+f.stLvlMin:''}${(!isNaN(f.stLvlMin)&&!isNaN(f.stLvlMax))?' и ':''}${!isNaN(f.stLvlMax)?'≤ '+f.stLvlMax:''}`.trim());
       }
-    });
-  });
+    }
 
-  // Sort by name
-  matches.sort((a, b) => (a.system.name || '').localeCompare(b.system.name || ''));
+    if(ok && f.useInhabitable){
+      if(f.terrain){
+        const ps=(s.planets||[]).filter(p=>p.category==='inhabitable' && String(p.terrain)===f.terrain);
+        if(!ps.length) ok=false; else { reasons.push(`Рельеф: ${f.terrain}`); ps.forEach(p=>matchedPlanetIds.add(p.id)); }
+      }
+      if(ok && (f.resChecked||[]).length>0){
+        const ps=(s.planets||[]).filter(p=>p.category==='inhabitable' && planetHasAllResources(p,f.resChecked));
+        if(!ps.length) ok=false; else { reasons.push(`Ресурсы (на одной планете): ${f.resChecked.join(', ')}`); ps.forEach(p=>matchedPlanetIds.add(p.id)); }
+      }
+      if(ok && f.ratioSim>0){
+        const ps=(s.planets||[]).filter(p=>approxMatchHOP_byRatio(p,f.ratio,f.ratioSim));
+        if(!ps.length) ok=false; else { reasons.push(`Соотношение H:O:P ≈ ${f.ratio.h}:${f.ratio.o}:${f.ratio.p} (≥${f.ratioSim}%)`); ps.forEach(p=>matchedPlanetIds.add(p.id)); }
+      }
+    }
 
-  renderDetails(matches.map(m => m.system), { header: `Найдено систем: ${matches.length}` }, matches);
+    if(ok) entries.push({galaxyId:g.id, system:s, reasons, highlightPlanetIds:Array.from(matchedPlanetIds)});
+  }));
+
+  entries.sort((a,b)=>(a.system.name||'').localeCompare(b.system.name||''));
+  renderSummaryList(entries);
 }
 
-function renderDetails(systems, meta = {}, matches = null) {
-  const wrap = d3.select('#details');
-  wrap.html('');
+function renderSummaryList(entries){
+  const wrap=d3.select('#details'); wrap.html('');
+  const title=document.createElement('div'); title.className='small muted'; title.textContent=`Найдено систем: ${entries.length}`;
+  wrap.node().appendChild(title);
 
-  if (meta.header) {
-    const title = document.createElement('div');
-    title.className = 'small muted';
-    title.textContent = meta.header;
-    wrap.node().appendChild(title);
-  }
-
-  systems.forEach((s, idx) => {
-    const card = document.createElement('div');
-    card.className = 'card result';
-    card.onclick = () => selectSystem(s.id);
-
-    const title = document.createElement('div');
-    title.className = 'sysTitle';
-    title.textContent = s.name || s.id;
-    card.appendChild(title);
-
-    const sub = document.createElement('div');
-    sub.className = 'sysSub';
-    sub.textContent = `Контроль: ${s.control || '—'} • Планет: ${s.planets.length} • Станций: ${s.stations.length} • Поясов: ${s.asteroidBelts.length}`;
-    card.appendChild(sub);
-
-    if (matches && matches[idx]) {
-      const why = document.createElement('div');
-      why.className = 'small muted';
-      why.textContent = matches[idx].reasons.join(' • ');
-      card.appendChild(why);
+  entries.forEach(({system:s, reasons, highlightPlanetIds})=>{
+    const card=document.createElement('div'); card.className='card result'; card.onclick=()=>selectSystem(s.id,highlightPlanetIds||[]);
+    const title=document.createElement('div'); title.className='sysTitle'; title.textContent=s.name||s.id; card.appendChild(title);
+    const sub=document.createElement('div'); sub.className='sysSub'; sub.textContent=`Планет: ${(s.planets||[]).length} • Станций: ${(s.stations||[]).length} • Поясов: ${(s.asteroidBelts||[]).length}`; card.appendChild(sub);
+    if(reasons&&reasons.length){
+      const why=document.createElement('div'); why.className='small muted'; why.textContent=reasons.join(' • '); card.appendChild(why);
     }
-
-    if (s.planets.length) {
-      const pHead = document.createElement('div');
-      pHead.className = 'small muted';
-      pHead.textContent = 'Планеты';
-      card.appendChild(pHead);
-
-      s.planets.slice(0, 6).forEach(p => {
-        const line = document.createElement('div');
-        line.className = 'small';
-        const lvl = Number.isFinite(p.level) ? ` • ур. ${p.level}` : '';
-        const cat = p.category === 'habitable' ? 'обитаема' : (p.category === 'inhabitable' ? 'необитаема' : (p.category || ''));
-        const res = (p.resources && p.resources.length) ? ` • ресурсы: ${p.resources.join(', ')}` : '';
-        line.textContent = `${p.name || p.id || 'Планета'} • ${cat}${lvl}${res}`;
-        card.appendChild(line);
-      });
-      if (s.planets.length > 6) {
-        const more = document.createElement('div');
-        more.className = 'small muted';
-        more.textContent = `… и ещё ${s.planets.length - 6}`;
-        card.appendChild(more);
-      }
+    if(highlightPlanetIds&&highlightPlanetIds.length){
+      const chips=document.createElement('div'); chips.className='chipsRow';
+      const names=highlightPlanetIds.slice(0,4).map(pid=>getPlanetName(s,pid));
+      names.forEach(n=>{const chip=document.createElement('span'); chip.className='chip'; chip.textContent=n; chips.appendChild(chip);});
+      if(highlightPlanetIds.length>4){ const more=document.createElement('span'); more.className='chip'; more.textContent=`… и ещё ${highlightPlanetIds.length-4}`; chips.appendChild(more); }
+      card.appendChild(chips);
     }
-
-    if (s.stations.length) {
-      const tHead = document.createElement('div');
-      tHead.className = 'small muted';
-      tHead.textContent = 'Станции';
-      card.appendChild(tHead);
-
-      s.stations.slice(0, 6).forEach(t => {
-        const line = document.createElement('div');
-        line.className = 'small';
-        const lvl = Number.isFinite(t.level) ? ` • ур. ${t.level}` : '';
-        line.textContent = `${t.name || t.id || 'Станция'} • тип: ${t.type || '—'}${lvl}`;
-        card.appendChild(line);
-      });
-      if (s.stations.length > 6) {
-        const more = document.createElement('div');
-        more.className = 'small muted';
-        more.textContent = `… и ещё ${s.stations.length - 6}`;
-        card.appendChild(more);
-      }
-    }
-
-    // Belts
-    if (s.asteroidBelts.length) {
-      const aHead = document.createElement('div');
-      aHead.className = 'small muted';
-      aHead.textContent = 'Астероидные пояса';
-      card.appendChild(aHead);
-
-      s.asteroidBelts.forEach(b => {
-        const line = document.createElement('div');
-        line.className = 'small';
-        const res = (b.resources && b.resources.length) ? ` • ресурсы: ${b.resources.join(', ')}` : '';
-        const cnt = Number.isFinite(b.count) ? ` • полей: ${b.count}` : '';
-        line.textContent = `Пояс${cnt}${res}`;
-        card.appendChild(line);
-      });
-    }
-
     wrap.node().appendChild(card);
   });
 }
 
-function clearSearch() {
-  d3.select('#q').property('value', '');
-  d3.select('#plLevel').property('value', '');
-  d3.select('#stLevel').property('value', '');
-  d3.select('#resTokens').property('value', '');
-  renderDetails([]);
+function clearSearch(){
+  ['useGalaxy','useSystem','usePlanets','useStations','useInhabitable'].forEach(id=>document.getElementById(id).checked=false);
+  document.getElementById('galaxyFilter').value='';
+  ['sysName','plName','plLvlMin','plLvlMax','stName','stLvlMin','stLvlMax'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('hasBelt').checked=false;
+  document.getElementById('stType').value='';
+  document.getElementById('terrainSelect').value='';
+  document.querySelectorAll('#resBox input[type="checkbox"]').forEach(el=>el.checked=false);
+  document.getElementById('splitA').value=33;
+  document.getElementById('splitB').value=66;
+  document.getElementById('ratioSim').value=0;
+  document.getElementById('ratioSimVal').textContent='0';
+  document.getElementById('splitA').dispatchEvent(new Event('input'));
+  renderDetailsEmpty();
   clearHighlight();
-  updateHash({ system: '' });
+  updateHash({system:''});
 }
 
-loadData().catch(err => {
-  document.body.innerHTML = '<pre style="color:#fff; padding:20px;">Ошибка загрузки: ' + err.message + '</pre>';
+loadData().catch(err=>{
+  document.body.innerHTML='<pre style="color:#fff; padding:20px;">Ошибка инициализации: '+err.message+'</pre>';
 });
 </script>
 </body>
