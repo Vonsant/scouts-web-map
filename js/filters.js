@@ -198,30 +198,38 @@ export function runSearch() {
   });
 
   // Advanced multi-level sort
-  entries.sort((a, b) => {
-    const currentGalaxyId = STATE.currentGalaxyId;
-    const isAGalaxyCurrent = a.galaxyId === currentGalaxyId;
-    const isBGalaxyCurrent = b.galaxyId === currentGalaxyId;
-
-    // 1. Prioritize the current galaxy
-    if (isAGalaxyCurrent && !isBGalaxyCurrent) return -1;
-    if (!isAGalaxyCurrent && isBGalaxyCurrent) return 1;
-
-    // 2. If priority is same, sort by galaxy name
-    const galA = STATE.galaxyIndex.get(a.galaxyId)?.name || a.galaxyId;
-    const galB = STATE.galaxyIndex.get(b.galaxyId)?.name || b.galaxyId;
-    const galCompare = galA.localeCompare(galB);
-    if (galCompare !== 0) return galCompare;
-
-    // 3. If galaxies are the same, sort by system name
-    return (a.system.name || a.system.id).localeCompare(b.system.name || b.system.id);
-  });
+  entries.sort(sortEntries);
 
   renderSummaryList(entries);
   STATE.lastSearchResults = entries;
 
   const systemIds = entries.map(e => e.system.id);
   highlightMultipleSystems(systemIds);
+}
+
+export function resortAndRenderResults() {
+  if (!STATE.lastSearchResults) return;
+  STATE.lastSearchResults.sort(sortEntries);
+  renderSummaryList(STATE.lastSearchResults);
+}
+
+function sortEntries(a, b) {
+  const currentGalaxyId = STATE.currentGalaxyId;
+  const isAGalaxyCurrent = a.galaxyId === currentGalaxyId;
+  const isBGalaxyCurrent = b.galaxyId === currentGalaxyId;
+
+  // 1. Prioritize the current galaxy
+  if (isAGalaxyCurrent && !isBGalaxyCurrent) return -1;
+  if (!isAGalaxyCurrent && isBGalaxyCurrent) return 1;
+
+  // 2. If priority is same, sort by galaxy name
+  const galA = STATE.galaxyIndex.get(a.galaxyId)?.name || a.galaxyId;
+  const galB = STATE.galaxyIndex.get(b.galaxyId)?.name || b.galaxyId;
+  const galCompare = galA.localeCompare(galB);
+  if (galCompare !== 0) return galCompare;
+
+  // 3. If galaxies are the same, sort by system name
+  return (a.system.name || a.system.id).localeCompare(b.system.name || b.system.id);
 }
 
 function updateFilterActiveStates() {

@@ -2,7 +2,7 @@ import { STATE } from './state.js';
 import { unique } from './utils.js';
 import { initMap, showGalaxy, initStars } from './map.js';
 import { buildFiltersUI, renderDetailsEmpty, selectSystem } from './ui.js';
-import { initFilters, runSearch, clearRouting } from './filters.js';
+import { initFilters, resortAndRenderResults } from './filters.js';
 
 async function loadComponents() {
   const [filtersHTML, mapHTML] = await Promise.all([
@@ -68,6 +68,10 @@ function onDataLoaded(data) {
     // No complex logic is needed here anymore. Just call it.
     showGalaxy(newGalaxyId);
     updateHash({ galaxy: newGalaxyId, system: '' });
+    // Re-sort and re-render search results if they exist
+    if (STATE.lastSearchResults) {
+      resortAndRenderResults();
+    }
   });
 
   const params = new URLSearchParams(location.hash.replace(/^#/, ''));
