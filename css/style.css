@@ -170,12 +170,15 @@ header h1{
   overflow-x:hidden;
   height:calc(100vh - 112px);
   min-height:0;
-  display:flex;
-  flex-direction:column;
-  gap:14px;
   z-index: 2;
   will-change: transform;
   scrollbar-gutter: stable;
+}
+
+#filters-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 #details{
