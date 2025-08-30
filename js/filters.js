@@ -7,7 +7,7 @@ import * as i18n from './localization.js';
 import { findPath } from './pathfinder.js';
 
 const GATE_ANDROMEDA_ID = '67e599a6-b223-4590-8253-96e3ba84c67b';
-const GATE_MILKYWAY_ID = 'd4e9aad6-6b0e-474f-854f-7f215e0e1cc3';
+const GATE_MILKYWAY_ID = '08556753-48e0-4cf5-a13d-d6f77f7347d7';
 
 function getFilters() {
   const useGalaxy = document.getElementById('filter-block-galaxy').classList.contains('active');
