@@ -3,8 +3,9 @@ const CONVERSION_COEFFICIENT = 5.107;
 
 /**
  * Calculates the Euclidean distance between two systems.
- * @param {object} s1 - The first system object with x, y, z coordinates.
- * @param {object} s2 - The second system object with x, y, z coordinates.
+ * Caches results to avoid re-computation.
+ * @param {object} s1 - The first system object.
+ * @param {object} s2 - The second system object.
  * @returns {number} The distance in parsecs.
  */
 function calculateDistance(s1, s2) {
@@ -28,16 +29,35 @@ function calculateDistance(s1, s2) {
  * @param {object} endNode - The goal system object.
  * @param {Array<object>} allNodes - An array of all systems in the galaxy.
  * @param {number} maxJump - The maximum jump distance allowed.
- * @returns {Array<object>} The shortest path as an array of system objects, or an empty array if no path is found.
+ * @returns {Array<object>} The shortest path, or an empty array if no path is found.
  */
 export function findPath(startNode, endNode, allNodes, maxJump) {
+  // Step 1: Build the adjacency list for the graph based on maxJump distance.
+  const adjacencyList = new Map();
+  for (const node of allNodes) {
+    adjacencyList.set(node, []);
+  }
+
+  for (let i = 0; i < allNodes.length; i++) {
+    for (let j = i + 1; j < allNodes.length; j++) {
+      const node1 = allNodes[i];
+      const node2 = allNodes[j];
+      const dist = calculateDistance(node1, node2);
+      if (dist <= maxJump) {
+        adjacencyList.get(node1).push(node2);
+        adjacencyList.get(node2).push(node1);
+      }
+    }
+  }
+
+  // Step 2: Run the A* algorithm using the pre-built adjacency list.
   const openSet = new Set([startNode]);
   const cameFrom = new Map();
 
-  const gScore = new Map();
+  const gScore = new Map(allNodes.map(node => [node, Infinity]));
   gScore.set(startNode, 0);
 
-  const fScore = new Map();
+  const fScore = new Map(allNodes.map(node => [node, Infinity]));
   fScore.set(startNode, calculateDistance(startNode, endNode));
 
   while (openSet.size > 0) {
@@ -61,21 +81,10 @@ export function findPath(startNode, endNode, allNodes, maxJump) {
 
     openSet.delete(current);
 
-    const maxCoordDist = maxJump * CONVERSION_COEFFICIENT;
-
-    for (const neighbor of allNodes) {
-      if (neighbor === current) continue;
-
-      // Optimization: rough check to prune distant nodes before calculating distance
-      if (Math.abs(current.x - neighbor.x) > maxCoordDist) continue;
-      if (Math.abs(current.y - neighbor.y) > maxCoordDist) continue;
-      if (Math.abs(current.z - neighbor.z) > maxCoordDist) continue;
-
-      const dist = calculateDistance(current, neighbor);
-      if (dist > maxJump) continue;
-
-      const tentativeGScore = gScore.get(current) + dist;
-      if (tentativeGScore < (gScore.get(neighbor) || Infinity)) {
+    const neighbors = adjacencyList.get(current) || [];
+    for (const neighbor of neighbors) {
+      const tentativeGScore = gScore.get(current) + calculateDistance(current, neighbor);
+      if (tentativeGScore < gScore.get(neighbor)) {
         cameFrom.set(neighbor, current);
         gScore.set(neighbor, tentativeGScore);
         fScore.set(neighbor, tentativeGScore + calculateDistance(neighbor, endNode));
@@ -89,6 +98,11 @@ export function findPath(startNode, endNode, allNodes, maxJump) {
   return []; // No path found
 }
 
+/**
+ * Calculates the total distance of a path.
+ * @param {Array<object>} path - An array of system objects representing the path.
+ * @returns {number} The total distance in parsecs.
+ */
 export function calculatePathDistance(path) {
   let totalDistance = 0;
   for (let i = 0; i < path.length - 1; i++) {
