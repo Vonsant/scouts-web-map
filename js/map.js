@@ -186,6 +186,7 @@ export function showGalaxy(galaxyId, callback) {
       clearHighlight();
   }
   buildSystemDatalist();
+  drawRoute();
 }
 
 function showTip(event, s) {
@@ -274,16 +275,40 @@ export function highlightMultipleSystems(systemIds) {
     });
 }
 
-export function drawRoute(path) {
+export function drawRoute() {
   clearRoute();
-  if (!path || path.length < 2) return;
+  const route = STATE.currentRoute;
+  if (!route || !route.path1) return;
+
+  let pathToDraw = null;
+
+  if (route.isCrossGalaxy) {
+    // For cross-galaxy, determine which path to draw based on the current galaxy
+    const path1GalaxyId = STATE.systemIndex.get(route.path1[0].id).galaxyId;
+    if (STATE.currentGalaxyId === path1GalaxyId) {
+      pathToDraw = route.path1;
+    } else {
+      // It must be the other galaxy's path. Check if path2 exists.
+      if (route.path2 && route.path2.length > 0) {
+        const path2GalaxyId = STATE.systemIndex.get(route.path2[0].id).galaxyId;
+        if(STATE.currentGalaxyId === path2GalaxyId) {
+          pathToDraw = route.path2;
+        }
+      }
+    }
+  } else {
+    // For same-galaxy, just draw path1
+    pathToDraw = route.path1;
+  }
+
+  if (!pathToDraw || pathToDraw.length < 2) return;
 
   const edges = d3.select('#edges');
   const labels = d3.select('#route-labels');
 
-  for (let i = 0; i < path.length - 1; i++) {
-    const p1 = path[i];
-    const p2 = path[i+1];
+  for (let i = 0; i < pathToDraw.length - 1; i++) {
+    const p1 = pathToDraw[i];
+    const p2 = pathToDraw[i+1];
 
     const x1 = VIZ.scaleX(p1.x);
     const y1 = VIZ.scaleY(p1.y);

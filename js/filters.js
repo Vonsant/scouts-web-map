@@ -6,6 +6,9 @@ import { updateHash } from './app.js';
 import * as i18n from './localization.js';
 import { findPath } from './pathfinder.js';
 
+const GATE_ANDROMEDA_ID = '67e599a6-b223-4590-8253-96e3ba84c67b';
+const GATE_MILKYWAY_ID = 'd4e9aad6-6b0e-474f-854f-7f215e0e1cc3';
+
 function getFilters() {
   const useGalaxy = document.getElementById('filter-block-galaxy').classList.contains('active');
   const useRaces = document.getElementById('filter-block-races').classList.contains('active');
@@ -227,38 +230,75 @@ function runRouting() {
   const endName = document.getElementById('routeEnd').value.trim();
   const maxJump = parseFloat(document.getElementById('routeMaxJump').value);
   const resultEl = document.getElementById('routeResult');
+  resultEl.textContent = '';
+  STATE.currentRoute = null;
 
   if (!startName || !endName) {
     resultEl.textContent = 'Выберите стартовую и конечную системы.';
     return;
   }
 
-  const galaxy = STATE.galaxyIndex.get(STATE.currentGalaxyId);
-  if (!galaxy || !galaxy.systems) {
-    resultEl.textContent = 'Ошибка: данные о галактике не загружены.';
+  const startRef = Array.from(STATE.systemIndex.values()).find(ref => (ref.system.name || ref.system.id) === startName);
+  const endRef = Array.from(STATE.systemIndex.values()).find(ref => (ref.system.name || ref.system.id) === endName);
+
+  if (!startRef || !endRef) {
+    resultEl.textContent = 'Одна из систем не найдена.';
     return;
   }
 
-  const allSystems = galaxy.systems;
-  const startSystem = allSystems.find(s => (s.name || s.id) === startName);
-  const endSystem = allSystems.find(s => (s.name || s.id) === endName);
+  const startSystem = startRef.system;
+  const endSystem = endRef.system;
+  const startGalaxyId = startRef.galaxyId;
+  const endGalaxyId = endRef.galaxyId;
 
-  if (!startSystem || !endSystem) {
-    resultEl.textContent = 'Одна из систем не найдена в текущей галактике.';
-    return;
-  }
+  if (startGalaxyId === endGalaxyId) {
+    // --- SAME GALAXY ROUTING ---
+    const galaxy = STATE.galaxyIndex.get(startGalaxyId);
+    const { path, distance } = findPath(startSystem, endSystem, galaxy.systems, maxJump);
 
-  const { path, distance } = findPath(startSystem, endSystem, allSystems, maxJump);
-
-  if (path.length > 0) {
-    resultEl.innerHTML = `Маршрут найден! Прыжков: ${path.length - 1}, <br>Дистанция: ${distance} пк.`;
-    drawRoute(path);
-    highlightMultipleSystems(path.map(s => s.id));
-    renderRouteDetails(path);
+    if (path.length > 0) {
+      STATE.currentRoute = { isCrossGalaxy: false, path1: path, path2: null, distance };
+      resultEl.innerHTML = `Маршрут найден! Прыжков: ${path.length - 1}, <br>Дистанция: ${distance} пк.`;
+      drawRoute();
+      highlightMultipleSystems(path.map(s => s.id));
+      renderRouteDetails(STATE.currentRoute);
+    } else {
+      resultEl.textContent = 'Маршрут не найден. Попробуйте увеличить дальность прыжка.';
+      clearRoute();
+      renderDetailsEmpty();
+    }
   } else {
-    resultEl.textContent = 'Маршрут не найден. Попробуйте увеличить дальность прыжка.';
-    clearRoute();
-    renderDetailsEmpty();
+    // --- CROSS GALAXY ROUTING ---
+    const startGalaxy = STATE.galaxyIndex.get(startGalaxyId);
+    const endGalaxy = STATE.galaxyIndex.get(endGalaxyId);
+
+    const gate1Id = startGalaxy.name === 'Андромеда' ? GATE_ANDROMEDA_ID : GATE_MILKYWAY_ID;
+    const gate2Id = endGalaxy.name === 'Андромеда' ? GATE_ANDROMEDA_ID : GATE_MILKYWAY_ID;
+
+    const gate1 = startGalaxy.systems.find(s => s.id === gate1Id);
+    const gate2 = endGalaxy.systems.find(s => s.id === gate2Id);
+
+    if (!gate1 || !gate2) {
+        resultEl.textContent = 'Ошибка: не найдены врата для межгалактического прыжка.';
+        return;
+    }
+
+    const res1 = findPath(startSystem, gate1, startGalaxy.systems, maxJump);
+    const res2 = findPath(gate2, endSystem, endGalaxy.systems, maxJump);
+
+    if (res1.path.length > 0 && res2.path.length > 0) {
+      const totalDist = res1.distance + res2.distance;
+      const totalJumps = (res1.path.length - 1) + (res2.path.length - 1) + 1; // +1 for the galaxy jump
+      STATE.currentRoute = { isCrossGalaxy: true, path1: res1.path, path2: res2.path, distance: totalDist };
+      resultEl.innerHTML = `Маршрут найден! Прыжков: ${totalJumps}, <br>Дистанция: ${totalDist} пк.`;
+      drawRoute();
+      highlightMultipleSystems(res1.path.map(s => s.id));
+      renderRouteDetails(STATE.currentRoute);
+    } else {
+      resultEl.textContent = 'Не удалось построить полный межгалактический маршрут.';
+      clearRoute();
+      renderDetailsEmpty();
+    }
   }
 }
 
@@ -266,6 +306,7 @@ function clearRouting() {
     document.getElementById('routeStart').value = '';
     document.getElementById('routeEnd').value = '';
     document.getElementById('routeResult').textContent = '';
+    STATE.currentRoute = null;
     clearRoute();
     clearHighlight();
 }

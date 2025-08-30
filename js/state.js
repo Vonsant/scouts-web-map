@@ -11,7 +11,8 @@ export const STATE = {
     galaxies: []
   },
   ratio: { h: 33, o: 33, p: 34 },
-  labelSize: 12
+  labelSize: 12,
+  currentRoute: null
 };
 
 export let VIZ = {

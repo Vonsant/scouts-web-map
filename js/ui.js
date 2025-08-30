@@ -291,7 +291,7 @@ export function buildFiltersUI() {
   buildSystemDatalist();
 }
 
-export function renderRouteDetails(path) {
+export function renderRouteDetails(route) {
   const wrap = d3.select('#details');
   wrap.html('');
 
@@ -300,29 +300,43 @@ export function renderRouteDetails(path) {
   title.style.margin = '0 0 12px 0';
   wrap.node().appendChild(title);
 
-  path.forEach((s, i) => {
-    const card = document.createElement('div');
-    card.className = 'card result'; // Re-use existing class for consistency
-    card.onclick = () => selectSystem(s.id, []);
+  const renderPath = (path, startIdx) => {
+    path.forEach((s, i) => {
+      const card = document.createElement('div');
+      card.className = 'card result';
+      card.onclick = () => selectSystem(s.id, []);
 
-    const content = document.createElement('div');
-    content.style.display = 'flex';
-    content.style.alignItems = 'center';
-    content.style.gap = '12px';
+      const content = document.createElement('div');
+      content.style.display = 'flex';
+      content.style.alignItems = 'center';
+      content.style.gap = '12px';
 
-    const stepNum = document.createElement('div');
-    stepNum.textContent = `${i + 1}.`;
-    stepNum.style.fontWeight = 'bold';
-    stepNum.style.color = 'var(--accent)';
+      const stepNum = document.createElement('div');
+      stepNum.textContent = `${startIdx + i}.`;
+      stepNum.style.fontWeight = 'bold';
+      stepNum.style.color = 'var(--accent)';
 
-    const sysName = document.createElement('div');
-    sysName.textContent = s.name || s.id;
+      const sysName = document.createElement('div');
+      sysName.textContent = s.name || s.id;
 
-    content.appendChild(stepNum);
-    content.appendChild(sysName);
-    card.appendChild(content);
-    wrap.node().appendChild(card);
-  });
+      content.appendChild(stepNum);
+      content.appendChild(sysName);
+      card.appendChild(content);
+      wrap.node().appendChild(card);
+    });
+  };
+
+  renderPath(route.path1, 1);
+
+  if (route.isCrossGalaxy) {
+    const separator = document.createElement('div');
+    separator.style.textAlign = 'center';
+    separator.style.margin = '10px 0';
+    separator.style.color = 'var(--accent-2)';
+    separator.innerHTML = `--- Межгалактический прыжок ---`;
+    wrap.node().appendChild(separator);
+    renderPath(route.path2, route.path1.length);
+  }
 }
 
 export function buildSystemDatalist() {
