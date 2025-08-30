@@ -1,9 +1,10 @@
 import { STATE, VIZ } from './state.js';
 import { selectSystem, buildSystemDatalist } from './ui.js';
 import * as i18n from './localization.js';
+import { calculateDistance } from './pathfinder.js';
 
 // Module-level variables for SVG elements
-let svg, gRoot, gCells, gPoints, gLabels, tip, zoom;
+let svg, gRoot, gCells, gPoints, gLabels, gRouteLabels, tip, zoom;
 
 export function initMap() {
   // Initialize selections now that the DOM is ready
@@ -12,6 +13,7 @@ export function initMap() {
   gCells = gRoot.append('g').attr('id', 'cells');
   gRoot.append('g').attr('id', 'edges').attr('class', 'edges'); // Still create the group for order, but don't store it
   gPoints = gRoot.append('g').attr('id', 'points');
+  gRouteLabels = gRoot.append('g').attr('id', 'route-labels');
   gLabels = gRoot.append('g').attr('id', 'labels');
   tip = d3.select('#tip');
 
@@ -276,20 +278,37 @@ export function drawRoute(path) {
   clearRoute();
   if (!path || path.length < 2) return;
 
-  const lineGenerator = d3.line()
-    .x(d => VIZ.scaleX(d.x))
-    .y(d => VIZ.scaleY(d.y));
+  const edges = d3.select('#edges');
+  const labels = d3.select('#route-labels');
 
-  d3.select('#edges').append('path')
-    .datum(path)
-    .attr('class', 'route-line')
-    .attr('d', lineGenerator)
-    .attr('fill', 'none')
-    .attr('stroke', 'var(--accent)')
-    .attr('stroke-width', 2)
-    .attr('stroke-dasharray', '5,5');
+  for (let i = 0; i < path.length - 1; i++) {
+    const p1 = path[i];
+    const p2 = path[i+1];
+
+    const x1 = VIZ.scaleX(p1.x);
+    const y1 = VIZ.scaleY(p1.y);
+    const x2 = VIZ.scaleX(p2.x);
+    const y2 = VIZ.scaleY(p2.y);
+
+    // Draw line for the segment
+    edges.append('line')
+      .attr('class', 'route-line')
+      .attr('x1', x1)
+      .attr('y1', y1)
+      .attr('x2', x2)
+      .attr('y2', y2);
+
+    // Add distance label for the segment
+    const dist = calculateDistance(p1, p2);
+    labels.append('text')
+      .attr('class', 'route-label')
+      .attr('x', (x1 + x2) / 2)
+      .attr('y', (y1 + y2) / 2 - 10) // Position label above the line
+      .text(`${dist} пк`);
+  }
 }
 
 export function clearRoute() {
   d3.select('#edges').selectAll('.route-line').remove();
+  d3.select('#route-labels').selectAll('.route-label').remove();
 }
