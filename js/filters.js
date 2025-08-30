@@ -4,7 +4,7 @@ import { renderDetailsEmpty, renderSummaryList, handleAccordion } from './ui.js'
 import { clearHighlight, highlightMultipleSystems, drawRoute, clearRoute } from './map.js';
 import { updateHash } from './app.js';
 import * as i18n from './localization.js';
-import { findPath, calculatePathDistance } from './pathfinder.js';
+import { findPath } from './pathfinder.js';
 
 function getFilters() {
   const useGalaxy = document.getElementById('filter-block-galaxy').classList.contains('active');
@@ -251,11 +251,10 @@ function runRouting() {
   // by only searching within the provided nodes. A cross-galaxy check is
   // not needed here if we only pass systems from the current galaxy.
 
-  const path = findPath(startSystem, endSystem, allSystems, maxJump);
+  const { path, distance } = findPath(startSystem, endSystem, allSystems, maxJump);
 
   if (path.length > 0) {
-    const totalDist = calculatePathDistance(path);
-    resultEl.innerHTML = `Маршрут найден! Прыжков: ${path.length - 1}, <br>Дистанция: ${totalDist.toFixed(2)} пк.`;
+    resultEl.innerHTML = `Маршрут найден! Прыжков: ${path.length - 1}, <br>Дистанция: ${distance.toFixed(2)} пк.`;
     drawRoute(path);
     highlightMultipleSystems(path.map(s => s.id));
   } else {

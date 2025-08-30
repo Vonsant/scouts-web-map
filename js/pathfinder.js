@@ -29,7 +29,7 @@ function calculateDistance(s1, s2) {
  * @param {object} endNode - The goal system object.
  * @param {Array<object>} allNodes - An array of all systems in the galaxy.
  * @param {number} maxJump - The maximum jump distance allowed.
- * @returns {Array<object>} The shortest path, or an empty array if no path is found.
+ * @returns {{path: Array<object>, distance: number}} The shortest path and its total distance.
  */
 export function findPath(startNode, endNode, allNodes, maxJump) {
   // Step 1: Build the adjacency list for the graph based on maxJump distance.
@@ -72,11 +72,12 @@ export function findPath(startNode, endNode, allNodes, maxJump) {
 
     if (current === endNode) {
       const path = [];
-      while (current) {
-        path.unshift(current);
-        current = cameFrom.get(current);
+      let temp = current;
+      while (temp) {
+        path.unshift(temp);
+        temp = cameFrom.get(temp);
       }
-      return path;
+      return { path, distance: gScore.get(endNode) };
     }
 
     openSet.delete(current);
@@ -95,18 +96,5 @@ export function findPath(startNode, endNode, allNodes, maxJump) {
     }
   }
 
-  return []; // No path found
-}
-
-/**
- * Calculates the total distance of a path.
- * @param {Array<object>} path - An array of system objects representing the path.
- * @returns {number} The total distance in parsecs.
- */
-export function calculatePathDistance(path) {
-  let totalDistance = 0;
-  for (let i = 0; i < path.length - 1; i++) {
-    totalDistance += calculateDistance(path[i], path[i+1]);
-  }
-  return totalDistance;
+  return { path: [], distance: 0 }; // No path found
 }
