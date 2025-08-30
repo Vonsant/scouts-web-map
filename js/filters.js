@@ -82,8 +82,7 @@ function approxMatchHOP_byRatio(p, ratioPct, thresholdPct) {
 }
 
 export function runSearch() {
-  clearHighlight();
-  clearRoute();
+  clearRouting();
   const f = getFilters();
   const anyUse = f.useGalaxy || f.useSystem || f.usePlanets || f.useStations || f.useInhabitable || f.useRaces;
   if (!anyUse) {
