@@ -284,6 +284,40 @@ export function buildFiltersUI() {
   buildSystemDatalist();
 }
 
+export function renderRouteDetails(path) {
+  const wrap = d3.select('#details');
+  wrap.html('');
+
+  const title = document.createElement('h3');
+  title.textContent = 'Проложенный маршрут';
+  title.style.margin = '0 0 12px 0';
+  wrap.node().appendChild(title);
+
+  path.forEach((s, i) => {
+    const card = document.createElement('div');
+    card.className = 'card result'; // Re-use existing class for consistency
+    card.onclick = () => selectSystem(s.id, []);
+
+    const content = document.createElement('div');
+    content.style.display = 'flex';
+    content.style.alignItems = 'center';
+    content.style.gap = '12px';
+
+    const stepNum = document.createElement('div');
+    stepNum.textContent = `${i + 1}.`;
+    stepNum.style.fontWeight = 'bold';
+    stepNum.style.color = 'var(--accent)';
+
+    const sysName = document.createElement('div');
+    sysName.textContent = s.name || s.id;
+
+    content.appendChild(stepNum);
+    content.appendChild(sysName);
+    card.appendChild(content);
+    wrap.node().appendChild(card);
+  });
+}
+
 export function buildSystemDatalist() {
   const galaxy = STATE.galaxyIndex.get(STATE.currentGalaxyId);
   if (!galaxy) return;

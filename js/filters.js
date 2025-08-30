@@ -1,6 +1,6 @@
 import { STATE } from './state.js';
 import { textIncludes, normVector, cosineSim } from './utils.js';
-import { renderDetailsEmpty, renderSummaryList, handleAccordion } from './ui.js';
+import { renderDetailsEmpty, renderSummaryList, handleAccordion, renderRouteDetails } from './ui.js';
 import { clearHighlight, highlightMultipleSystems, drawRoute, clearRoute } from './map.js';
 import { updateHash } from './app.js';
 import * as i18n from './localization.js';
@@ -247,19 +247,17 @@ function runRouting() {
     return;
   }
 
-  // The logic in pathfinder already handles same-galaxy check implicitly
-  // by only searching within the provided nodes. A cross-galaxy check is
-  // not needed here if we only pass systems from the current galaxy.
-
   const { path, distance } = findPath(startSystem, endSystem, allSystems, maxJump);
 
   if (path.length > 0) {
     resultEl.innerHTML = `Маршрут найден! Прыжков: ${path.length - 1}, <br>Дистанция: ${distance} пк.`;
     drawRoute(path);
     highlightMultipleSystems(path.map(s => s.id));
+    renderRouteDetails(path);
   } else {
     resultEl.textContent = 'Маршрут не найден. Попробуйте увеличить дальность прыжка.';
     clearRoute();
+    renderDetailsEmpty();
   }
 }
 
@@ -272,10 +270,19 @@ function clearRouting() {
 }
 
 export function initFilters() {
-    document.getElementById('runSearch').addEventListener('click', runSearch);
-    document.getElementById('clearSearch').addEventListener('click', clearSearch);
-    document.getElementById('runRoute').addEventListener('click', runRouting);
-    document.getElementById('clearRoute').addEventListener('click', clearRouting);
+    document.getElementById('runSearch').addEventListener('click', () => {
+      const isRouting = document.getElementById('filter-block-route').classList.contains('active');
+      if (isRouting) {
+        runRouting();
+      } else {
+        runSearch();
+      }
+    });
+
+    document.getElementById('clearSearch').addEventListener('click', () => {
+      clearSearch();
+      clearRouting();
+    });
 
     // Accordion logic
     document.querySelectorAll('#filters .blk .hdrline').forEach(header => {
