@@ -187,6 +187,7 @@ export function showGalaxy(galaxyId, callback) {
   }
   // buildSystemDatalist(); // No longer needed here, as the list is now global.
   drawRoute();
+  drawSearchHighlights();
 }
 
 function showTip(event, s) {
@@ -266,12 +267,23 @@ export function highlightSystem(systemId) {
 }
 
 export function highlightMultipleSystems(systemIds) {
+    clearHighlight();
     if (!systemIds || !systemIds.length) return;
 
     systemIds.forEach(id => {
         d3.select(`#cell-${id}`).classed('highlight', true);
         d3.select(`#pt-${id}`).classed('highlight', true);
     });
+}
+
+function drawSearchHighlights() {
+  if (!STATE.lastSearchResults) return;
+
+  const systemIdsInCurrentGalaxy = STATE.lastSearchResults
+    .filter(res => res.galaxyId === STATE.currentGalaxyId)
+    .map(res => res.system.id);
+
+  highlightMultipleSystems(systemIdsInCurrentGalaxy);
 }
 
 export function drawRoute() {

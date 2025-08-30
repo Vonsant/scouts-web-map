@@ -82,12 +82,15 @@ function approxMatchHOP_byRatio(p, ratioPct, thresholdPct) {
 }
 
 export function runSearch() {
+  // A new search clears any previous route state.
+  // A new search clears any previous route state.
   STATE.currentRoute = null;
   clearRoute();
-  clearHighlight();
+
   const f = getFilters();
   const anyUse = f.useGalaxy || f.useSystem || f.usePlanets || f.useStations || f.useInhabitable || f.useRaces;
   if (!anyUse) {
+    STATE.lastSearchResults = null;
     renderDetailsEmpty();
     return;
   }
@@ -109,7 +112,6 @@ export function runSearch() {
       let passedContextual = false;
       let nonRaceFiltersActive = false;
 
-      // Case 1: Races + Stations
       if (f.useStations) {
         nonRaceFiltersActive = true;
         let stationPool = s.stations || [];
@@ -130,7 +132,6 @@ export function runSearch() {
         }
       }
 
-      // Case 2: Races + Planets (Generic)
       if (f.usePlanets) {
         nonRaceFiltersActive = true;
         let planetPool = (s.planets || []).filter(p => p.category === 'habitable');
@@ -151,7 +152,6 @@ export function runSearch() {
         }
       }
 
-      // Case 3: Races + Inhabitable
       if (f.useInhabitable) {
         nonRaceFiltersActive = true;
         let inhabitablePool = (s.planets || []).filter(p => p.category === 'inhabitable');
@@ -178,7 +178,6 @@ export function runSearch() {
         }
       }
 
-      // Case 4: Only Races is selected
       if (f.useRaces && !nonRaceFiltersActive) {
           if (isRacePredominant(s, f.raceChecked)) {
               passedContextual = true;
@@ -189,7 +188,6 @@ export function runSearch() {
       }
 
       if (!nonRaceFiltersActive && !f.useRaces) {
-          // Only basic filters were used (galaxy/system)
           passedContextual = true;
       }
 
@@ -201,6 +199,7 @@ export function runSearch() {
 
   entries.sort((a, b) => (a.system.name || '').localeCompare(b.system.name || ''));
   renderSummaryList(entries);
+  STATE.lastSearchResults = entries;
 
   const systemIds = entries.map(e => e.system.id);
   highlightMultipleSystems(systemIds);
@@ -224,6 +223,7 @@ export function clearSearch() {
   renderDetailsEmpty();
   clearHighlight();
   updateHash({ system: '' });
+  STATE.lastSearchResults = null;
 }
 
 function runRouting() {
@@ -231,8 +231,12 @@ function runRouting() {
   const endName = document.getElementById('routeEnd').value.trim();
   const maxJump = parseFloat(document.getElementById('routeMaxJump').value);
   const resultEl = document.getElementById('routeResult');
+
+  // Clear previous state
   resultEl.textContent = '';
   STATE.currentRoute = null;
+  STATE.lastSearchResults = null;
+  clearHighlight();
 
   if (!startName || !endName) {
     resultEl.textContent = 'Выберите стартовую и конечную системы.';
@@ -253,7 +257,6 @@ function runRouting() {
   const endGalaxyId = endRef.galaxyId;
 
   if (startGalaxyId === endGalaxyId) {
-    // --- SAME GALAXY ROUTING ---
     const galaxy = STATE.galaxyIndex.get(startGalaxyId);
     const { path, distance } = findPath(startSystem, endSystem, galaxy.systems, maxJump);
 
@@ -268,7 +271,6 @@ function runRouting() {
       renderDetailsEmpty();
     }
   } else {
-    // --- CROSS GALAXY ROUTING ---
     const startGalaxy = STATE.galaxyIndex.get(startGalaxyId);
     const endGalaxy = STATE.galaxyIndex.get(endGalaxyId);
 
@@ -288,7 +290,7 @@ function runRouting() {
 
     if (res1.path.length > 0 && res2.path.length > 0) {
       const totalDist = res1.distance + res2.distance;
-      const totalJumps = (res1.path.length - 1) + (res2.path.length - 1) + 1; // +1 for the galaxy jump
+      const totalJumps = (res1.path.length - 1) + (res2.path.length - 1) + 1;
       STATE.currentRoute = { isCrossGalaxy: true, path1: res1.path, path2: res2.path, distance: totalDist };
       resultEl.innerHTML = `Маршрут найден! Прыжков: ${totalJumps}, <br>Дистанция: ${totalDist} пк.`;
       drawRoute();
@@ -325,7 +327,6 @@ export function initFilters() {
       clearRouting();
     });
 
-    // Accordion logic
     document.querySelectorAll('#filters .blk .hdrline').forEach(header => {
       header.addEventListener('click', (e) => {
         header.parentElement.classList.toggle('active');

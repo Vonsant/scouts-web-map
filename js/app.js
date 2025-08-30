@@ -64,23 +64,9 @@ function onDataLoaded(data) {
     .attr('value', d => d.id).text(d => d.name || d.id);
   sel.on('change', () => {
     const newGalaxyId = sel.property('value');
-
-    // If a cross-galaxy route is active, don't clear it when switching between the two relevant galaxies.
-    if (STATE.currentRoute && STATE.currentRoute.isCrossGalaxy) {
-      const startGalaxyId = STATE.systemIndex.get(STATE.currentRoute.path1[0].id).galaxyId;
-      const endGalaxyId = STATE.systemIndex.get(STATE.currentRoute.path2[0].id).galaxyId;
-      if (newGalaxyId === startGalaxyId || newGalaxyId === endGalaxyId) {
-        showGalaxy(newGalaxyId); // Just show the galaxy, which will trigger drawRoute
-        updateHash({ galaxy: newGalaxyId, system: '' });
-        return;
-      }
-    }
-
-    // For all other cases (no route, or a same-galaxy route), clear everything.
-    clearRouting();
-    showGalaxy(newGalaxyId, () => {
-      runSearch();
-    });
+    // The showGalaxy function is now smart enough to redraw the correct state.
+    // No complex logic is needed here anymore. Just call it.
+    showGalaxy(newGalaxyId);
     updateHash({ galaxy: newGalaxyId, system: '' });
   });
 
