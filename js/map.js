@@ -266,7 +266,6 @@ export function highlightSystem(systemId) {
 }
 
 export function highlightMultipleSystems(systemIds) {
-    clearHighlight();
     if (!systemIds || !systemIds.length) return;
 
     systemIds.forEach(id => {
@@ -276,28 +275,23 @@ export function highlightMultipleSystems(systemIds) {
 }
 
 export function drawRoute() {
-  clearRoute();
+  clearRoute(); // This now also clears highlights
   const route = STATE.currentRoute;
   if (!route || !route.path1) return;
 
   let pathToDraw = null;
 
   if (route.isCrossGalaxy) {
-    // For cross-galaxy, determine which path to draw based on the current galaxy
     const path1GalaxyId = STATE.systemIndex.get(route.path1[0].id).galaxyId;
     if (STATE.currentGalaxyId === path1GalaxyId) {
       pathToDraw = route.path1;
-    } else {
-      // It must be the other galaxy's path. Check if path2 exists.
-      if (route.path2 && route.path2.length > 0) {
-        const path2GalaxyId = STATE.systemIndex.get(route.path2[0].id).galaxyId;
-        if(STATE.currentGalaxyId === path2GalaxyId) {
-          pathToDraw = route.path2;
-        }
+    } else if (route.path2 && route.path2.length > 0) {
+      const path2GalaxyId = STATE.systemIndex.get(route.path2[0].id).galaxyId;
+      if (STATE.currentGalaxyId === path2GalaxyId) {
+        pathToDraw = route.path2;
       }
     }
   } else {
-    // For same-galaxy, just draw path1
     pathToDraw = route.path1;
   }
 
@@ -309,31 +303,28 @@ export function drawRoute() {
   for (let i = 0; i < pathToDraw.length - 1; i++) {
     const p1 = pathToDraw[i];
     const p2 = pathToDraw[i+1];
+    const x1 = VIZ.scaleX(p1.x), y1 = VIZ.scaleY(p1.y);
+    const x2 = VIZ.scaleX(p2.x), y2 = VIZ.scaleY(p2.y);
 
-    const x1 = VIZ.scaleX(p1.x);
-    const y1 = VIZ.scaleY(p1.y);
-    const x2 = VIZ.scaleX(p2.x);
-    const y2 = VIZ.scaleY(p2.y);
-
-    // Draw line for the segment
     edges.append('line')
       .attr('class', 'route-line')
-      .attr('x1', x1)
-      .attr('y1', y1)
-      .attr('x2', x2)
-      .attr('y2', y2);
+      .attr('x1', x1).attr('y1', y1)
+      .attr('x2', x2).attr('y2', y2);
 
-    // Add distance label for the segment
     const dist = calculateDistance(p1, p2);
     labels.append('text')
       .attr('class', 'route-label')
       .attr('x', (x1 + x2) / 2)
-      .attr('y', (y1 + y2) / 2 - 10) // Position label above the line
+      .attr('y', (y1 + y2) / 2 - 10)
       .text(`${dist} пк`);
   }
+
+  // Highlight the systems in the visible path
+  highlightMultipleSystems(pathToDraw.map(s => s.id));
 }
 
 export function clearRoute() {
   d3.select('#edges').selectAll('.route-line').remove();
   d3.select('#route-labels').selectAll('.route-label').remove();
+  clearHighlight(); // Also clear highlights when clearing a route
 }

@@ -260,7 +260,6 @@ function runRouting() {
       STATE.currentRoute = { isCrossGalaxy: false, path1: path, path2: null, distance };
       resultEl.innerHTML = `Маршрут найден! Прыжков: ${path.length - 1}, <br>Дистанция: ${distance} пк.`;
       drawRoute();
-      highlightMultipleSystems(path.map(s => s.id));
       renderRouteDetails(STATE.currentRoute);
     } else {
       resultEl.textContent = 'Маршрут не найден. Попробуйте увеличить дальность прыжка.';
@@ -292,7 +291,6 @@ function runRouting() {
       STATE.currentRoute = { isCrossGalaxy: true, path1: res1.path, path2: res2.path, distance: totalDist };
       resultEl.innerHTML = `Маршрут найден! Прыжков: ${totalJumps}, <br>Дистанция: ${totalDist} пк.`;
       drawRoute();
-      highlightMultipleSystems(res1.path.map(s => s.id));
       renderRouteDetails(STATE.currentRoute);
     } else {
       resultEl.textContent = 'Не удалось построить полный межгалактический маршрут.';
