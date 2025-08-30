@@ -61,8 +61,15 @@ export function findPath(startNode, endNode, allNodes, maxJump) {
 
     openSet.delete(current);
 
+    const maxCoordDist = maxJump * CONVERSION_COEFFICIENT;
+
     for (const neighbor of allNodes) {
       if (neighbor === current) continue;
+
+      // Optimization: rough check to prune distant nodes before calculating distance
+      if (Math.abs(current.x - neighbor.x) > maxCoordDist) continue;
+      if (Math.abs(current.y - neighbor.y) > maxCoordDist) continue;
+      if (Math.abs(current.z - neighbor.z) > maxCoordDist) continue;
 
       const dist = calculateDistance(current, neighbor);
       if (dist > maxJump) continue;
