@@ -175,6 +175,7 @@ header h1{
   gap:14px;
   z-index: 2;
   will-change: transform;
+  scrollbar-gutter: stable;
 }
 
 #details{
@@ -804,7 +805,7 @@ label:has(#ratioSim) input[type=range] {
   transition: opacity .3s;
 }
 
-.blk.filter-active .status-dot {
+.blk.filter-active.active .status-dot {
   opacity: 1;
 }
 

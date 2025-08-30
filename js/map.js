@@ -313,7 +313,11 @@ export function drawRoute() {
       }
     }
   } else {
-    pathToDraw = route.path1;
+    // For a single-galaxy route, check it belongs to the current galaxy
+    const routeGalaxyId = STATE.systemIndex.get(route.path1[0].id).galaxyId;
+    if (STATE.currentGalaxyId === routeGalaxyId) {
+      pathToDraw = route.path1;
+    }
   }
 
   if (!pathToDraw || pathToDraw.length < 2) return;
