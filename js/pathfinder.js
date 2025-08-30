@@ -1,5 +1,5 @@
 const DISTANCE_CACHE = new Map();
-const CONVERSION_COEFFICIENT = 5.107;
+const CONVERSION_COEFFICIENT = 5;
 
 /**
  * Calculates the Euclidean distance between two systems.
@@ -18,7 +18,7 @@ export function calculateDistance(s1, s2) {
   const dy = s1.y - s2.y;
   const dz = s1.z - s2.z;
   const distance = Math.sqrt(dx * dx + dy * dy + dz * dz) / CONVERSION_COEFFICIENT;
-  const roundedDistance = Math.round(distance);
+  const roundedDistance = Math.floor(distance);
 
   DISTANCE_CACHE.set(key1, roundedDistance);
   return roundedDistance;

@@ -40,6 +40,13 @@ export function renderSystemDetails(s, highlightPlanetIds) {
   const wrap = d3.select('#details');
   wrap.html('');
 
+  const backBtn = document.createElement('button');
+  backBtn.className = 'ghost';
+  backBtn.style.marginBottom = '12px';
+  backBtn.textContent = '‹ Назад к результатам';
+  backBtn.onclick = () => document.getElementById('runSearch').click();
+  wrap.node().appendChild(backBtn);
+
   // System Header (Color and Type removed)
   const head = document.createElement('div');
   head.className = 'card';
