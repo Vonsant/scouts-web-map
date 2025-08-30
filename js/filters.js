@@ -300,7 +300,7 @@ function runRouting() {
   }
 }
 
-function clearRouting() {
+export function clearRouting() {
     document.getElementById('routeStart').value = '';
     document.getElementById('routeEnd').value = '';
     document.getElementById('routeResult').textContent = '';
