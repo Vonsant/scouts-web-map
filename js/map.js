@@ -185,7 +185,7 @@ export function showGalaxy(galaxyId, callback) {
   } else {
       clearHighlight();
   }
-  buildSystemDatalist();
+  // buildSystemDatalist(); // No longer needed here, as the list is now global.
   drawRoute();
 }
 

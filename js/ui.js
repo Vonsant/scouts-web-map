@@ -340,13 +340,22 @@ export function renderRouteDetails(route) {
 }
 
 export function buildSystemDatalist() {
-  const galaxy = STATE.galaxyIndex.get(STATE.currentGalaxyId);
-  if (!galaxy) return;
-  const systems = (galaxy.systems || []).map(s => s.name || s.id).sort((a,b) => a.localeCompare(b));
+  const allSystemNames = [];
+  if (STATE.data && STATE.data.galaxies) {
+    STATE.data.galaxies.forEach(galaxy => {
+      if (galaxy.systems) {
+        galaxy.systems.forEach(system => {
+          allSystemNames.push(system.name || system.id);
+        });
+      }
+    });
+  }
+  allSystemNames.sort((a, b) => a.localeCompare(b));
+
   const datalist = d3.select('#system-list');
   datalist.selectAll('option').remove();
   datalist.selectAll('option')
-    .data(systems)
+    .data(allSystemNames)
     .join('option')
     .attr('value', d => d);
 }
