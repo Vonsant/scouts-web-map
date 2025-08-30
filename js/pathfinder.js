@@ -18,9 +18,10 @@ function calculateDistance(s1, s2) {
   const dy = s1.y - s2.y;
   const dz = s1.z - s2.z;
   const distance = Math.sqrt(dx * dx + dy * dy + dz * dz) / CONVERSION_COEFFICIENT;
+  const roundedDistance = Math.round(distance);
 
-  DISTANCE_CACHE.set(key1, distance);
-  return distance;
+  DISTANCE_CACHE.set(key1, roundedDistance);
+  return roundedDistance;
 }
 
 /**

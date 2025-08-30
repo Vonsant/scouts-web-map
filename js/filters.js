@@ -254,7 +254,7 @@ function runRouting() {
   const { path, distance } = findPath(startSystem, endSystem, allSystems, maxJump);
 
   if (path.length > 0) {
-    resultEl.innerHTML = `Маршрут найден! Прыжков: ${path.length - 1}, <br>Дистанция: ${distance.toFixed(2)} пк.`;
+    resultEl.innerHTML = `Маршрут найден! Прыжков: ${path.length - 1}, <br>Дистанция: ${distance} пк.`;
     drawRoute(path);
     highlightMultipleSystems(path.map(s => s.id));
   } else {
