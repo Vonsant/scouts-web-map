@@ -229,7 +229,18 @@ export function renderSummaryList(entries) {
   title.textContent = `Найдено систем: ${entries.length}`;
   wrap.node().appendChild(title);
 
-  entries.forEach(({ system: s, reasons, highlightPlanetIds }) => {
+  let lastGalaxyId = null;
+
+  entries.forEach(({ galaxyId, system: s, reasons, highlightPlanetIds }) => {
+    if (galaxyId !== lastGalaxyId) {
+      const galaxy = STATE.galaxyIndex.get(galaxyId);
+      const galaxyHeader = document.createElement('h2');
+      galaxyHeader.className = 'galaxy-result-header';
+      galaxyHeader.textContent = galaxy ? (galaxy.name || galaxy.id) : 'Неизвестная галактика';
+      wrap.node().appendChild(galaxyHeader);
+      lastGalaxyId = galaxyId;
+    }
+
     const card = document.createElement('div');
     card.className = 'card result';
     card.onclick = () => selectSystem(s.id, highlightPlanetIds || []);

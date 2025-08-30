@@ -85,58 +85,16 @@ function onDataLoaded(data) {
   });
 }
 
-function parseLoadedJson(text) {
-  const data = JSON.parse(text);
-  if (!data || !Array.isArray(data.galaxies)) throw new Error('Неверный формат: нет массива galaxies');
-  return data;
-}
-
-function bindFileInputs() {
-  const fileInput = document.getElementById('fileInput');
-  const overlayInput = document.getElementById('overlayFileInput');
-  const overlay = document.getElementById('loaderOverlay');
-  const overlayErr = document.getElementById('overlayErr');
-
-  document.getElementById('loadLocal').addEventListener('click', () => fileInput.click());
-
-  function handleFile(el, fromOverlay = false) {
-    const f = el.files && el.files[0];
-    if (!f) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const data = parseLoadedJson(reader.result);
-        onDataLoaded(data);
-        if (fromOverlay) {
-          overlay.style.display = 'none';
-          overlayErr.textContent = '';
-        }
-      } catch (err) {
-        if (fromOverlay) overlayErr.textContent = String(err.message || err);
-        else alert(err.message || err);
-      }
-    };
-    reader.readAsText(f, 'utf-8');
-  }
-  fileInput.addEventListener('change', () => handleFile(fileInput, false));
-  overlayInput.addEventListener('change', () => handleFile(overlayInput, true));
-}
-
-function showOverlay() {
-  document.getElementById('loaderOverlay').style.display = 'flex';
-}
-
 async function loadData() {
-  bindFileInputs();
   try {
-    const isFile = location.protocol === 'file:';
-    if (isFile) throw new Error('Local file mode');
     const res = await fetch('data.json', { cache: 'no-store' });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
     const data = await res.json();
+    if (!data || !Array.isArray(data.galaxies)) throw new Error('Неверный формат данных: отсутствует массив galaxies');
     onDataLoaded(data);
   } catch (err) {
-    showOverlay();
+    console.error('Ошибка загрузки данных карты:', err);
+    document.getElementById('content').innerHTML = `<div class="card" style="margin:20px; padding:20px; color:var(--err);">Не удалось загрузить данные карты. Пожалуйста, обновите страницу. <br><br><span class="muted small">${err.message}</span></div>`;
   }
 }
 

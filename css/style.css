@@ -877,3 +877,12 @@ label:has(#ratioSim) input[type=range] {
   text-align: center;
   font-weight: 500;
 }
+
+.galaxy-result-header {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--accent-2);
+  padding: 16px 0 8px 4px;
+  margin: 0;
+  border-bottom: 1px solid var(--border);
+}
