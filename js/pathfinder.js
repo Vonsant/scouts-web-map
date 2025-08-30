@@ -8,7 +8,7 @@ const CONVERSION_COEFFICIENT = 5.107;
  * @param {object} s2 - The second system object.
  * @returns {number} The distance in parsecs.
  */
-function calculateDistance(s1, s2) {
+export function calculateDistance(s1, s2) {
   const key1 = `${s1.id}-${s2.id}`;
   if (DISTANCE_CACHE.has(key1)) return DISTANCE_CACHE.get(key1);
   const key2 = `${s2.id}-${s1.id}`;
