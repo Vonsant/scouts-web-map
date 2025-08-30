@@ -205,6 +205,70 @@ export function runSearch() {
   highlightMultipleSystems(systemIds);
 }
 
+function updateFilterActiveStates() {
+  const groups = {
+    galaxy: [
+      { id: 'galaxyFilter', type: 'select' },
+    ],
+    system: [
+      { id: 'sysName', type: 'text' },
+      { id: 'hasBelt', type: 'check' },
+    ],
+    planets: [
+      { id: 'plName', type: 'text' },
+      { id: 'plLvlMin', type: 'text' },
+      { id: 'plLvlMax', type: 'text' },
+    ],
+    races: [
+      { id: 'raceBox', type: 'any_check' },
+    ],
+    stations: [
+      { id: 'stType', type: 'select' },
+      { id: 'stName', type: 'text' },
+      { id: 'stLvlMin', type: 'text' },
+      { id: 'stLvlMax', type: 'text' },
+    ],
+    inhabitable: [
+      { id: 'terrainBox', type: 'any_check' },
+      { id: 'resBox', type: 'any_check' },
+      { id: 'ratioSim', type: 'range', defaultValue: 0 },
+    ],
+    route: [
+      { id: 'routeStart', type: 'text' },
+      { id: 'routeEnd', type: 'text' },
+    ]
+  };
+
+  for (const [groupName, inputs] of Object.entries(groups)) {
+    const block = document.getElementById(`filter-block-${groupName}`);
+    if (!block) continue;
+
+    let isActive = false;
+    for (const input of inputs) {
+      const el = document.getElementById(input.id);
+      if (!el) continue;
+
+      switch (input.type) {
+        case 'text':
+        case 'select':
+          if (el.value.trim()) isActive = true;
+          break;
+        case 'check':
+          if (el.checked) isActive = true;
+          break;
+        case 'any_check':
+          if (el.querySelector('input:checked')) isActive = true;
+          break;
+        case 'range':
+          if (Number(el.value) !== (input.defaultValue || 0)) isActive = true;
+          break;
+      }
+      if (isActive) break;
+    }
+    block.classList.toggle('filter-active', isActive);
+  }
+}
+
 export function clearSearch() {
   document.querySelectorAll('#filters .blk.active').forEach(el => el.classList.remove('active'));
 
@@ -224,6 +288,7 @@ export function clearSearch() {
   clearHighlight();
   updateHash({ system: '' });
   STATE.lastSearchResults = null;
+  updateFilterActiveStates(); // Reset dots
 }
 
 function runRouting() {
@@ -303,6 +368,36 @@ function runRouting() {
   }
 }
 
+function toggleRoutePickingMode(target = null) {
+  const statusEl = document.getElementById('route-picker-status');
+  const mapEl = document.getElementById('map');
+
+  // If a target is provided, enter picking mode
+  if (target) {
+    STATE.isPickingForRoute = target;
+    const targetName = target === 'start' ? 'стартовую' : 'конечную';
+    statusEl.textContent = `Выберите ${targetName} систему на карте...`;
+    mapEl.classList.add('picking-mode');
+  } else {
+    // If no target, exit picking mode
+    STATE.isPickingForRoute = null;
+    statusEl.textContent = '';
+    mapEl.classList.remove('picking-mode');
+  }
+}
+
+export function setSystemForRoutePicker(systemName) {
+  if (!STATE.isPickingForRoute) return;
+
+  const inputId = STATE.isPickingForRoute === 'start' ? 'routeStart' : 'routeEnd';
+  document.getElementById(inputId).value = systemName;
+
+  // Manually trigger input event for reactivity
+  document.getElementById(inputId).dispatchEvent(new Event('input'));
+
+  toggleRoutePickingMode(null); // Exit picking mode
+}
+
 export function clearRouting() {
     document.getElementById('routeStart').value = '';
     document.getElementById('routeEnd').value = '';
@@ -310,9 +405,15 @@ export function clearRouting() {
     STATE.currentRoute = null;
     clearRoute();
     clearHighlight();
+    if (STATE.isPickingForRoute) {
+      toggleRoutePickingMode(null);
+    }
 }
 
 export function initFilters() {
+    document.getElementById('pickRouteStart').addEventListener('click', () => toggleRoutePickingMode('start'));
+    document.getElementById('pickRouteEnd').addEventListener('click', () => toggleRoutePickingMode('end'));
+
     document.getElementById('runSearch').addEventListener('click', () => {
       const isRouting = document.getElementById('filter-block-route').classList.contains('active');
       if (isRouting) {
@@ -333,6 +434,22 @@ export function initFilters() {
         handleAccordion(e.currentTarget);
       });
     });
+
+    // Add event listeners to all filter inputs to update status dots
+    const filterContainer = document.getElementById('filters-inner');
+    filterContainer.addEventListener('input', (e) => {
+      // Use event delegation for performance
+      if (e.target.matches('input, select')) {
+        updateFilterActiveStates();
+      }
+    });
+    filterContainer.addEventListener('change', (e) => {
+      // `change` is needed for checkboxes and selects
+      if (e.target.matches('input[type="checkbox"], select')) {
+        updateFilterActiveStates();
+      }
+    });
+
 
     const maxJumpSlider = document.getElementById('routeMaxJump');
     const maxJumpVal = document.getElementById('routeMaxJumpVal');
@@ -369,4 +486,7 @@ export function initFilters() {
     b.addEventListener('input', updateDouble);
     sim.addEventListener('input', () => simVal.textContent = sim.value);
     updateDouble();
+
+    // Set initial active states for filters
+    updateFilterActiveStates();
 }

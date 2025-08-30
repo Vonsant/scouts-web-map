@@ -1,8 +1,15 @@
 <div id="filters-inner">
+  <div class="filter-info-box">
+    💡 Фильтры применяются только из раскрытых секций.
+  </div>
   <!-- GALAXY FILTER -->
-  <div class="blk" id="filter-block-galaxy">
+  <div class="blk" id="filter-block-galaxy" data-filter-group="galaxy">
     <div class="hdrline">
-      <h3>Галактика</h3>
+      <div class="hdr-left">
+        <span class="status-dot"></span>
+        <h3>Галактика</h3>
+      </div>
+      <div class="chevron"></div>
     </div>
     <div class="collapsible-content">
       <label>Выбор галактики
@@ -12,9 +19,13 @@
   </div>
 
   <!-- SYSTEM FILTER -->
-  <div class="blk" id="filter-block-system">
+  <div class="blk" id="filter-block-system" data-filter-group="system">
     <div class="hdrline">
-      <h3>Система</h3>
+      <div class="hdr-left">
+        <span class="status-dot"></span>
+        <h3>Система</h3>
+      </div>
+      <div class="chevron"></div>
     </div>
     <div class="collapsible-content">
       <div class="grid">
@@ -25,9 +36,13 @@
   </div>
 
   <!-- PLANETS GENERIC -->
-  <div class="blk" id="filter-block-planets">
+  <div class="blk" id="filter-block-planets" data-filter-group="planets">
     <div class="hdrline">
-      <h3>ПЛАНЕТЫ</h3>
+      <div class="hdr-left">
+        <span class="status-dot"></span>
+        <h3>ПЛАНЕТЫ</h3>
+      </div>
+      <div class="chevron"></div>
     </div>
     <div class="collapsible-content">
       <div class="grid">
@@ -43,9 +58,13 @@
   </div>
 
   <!-- RACES -->
-  <div class="blk" id="filter-block-races">
+  <div class="blk" id="filter-block-races" data-filter-group="races">
     <div class="hdrline">
-      <h3>Расы</h3>
+      <div class="hdr-left">
+        <span class="status-dot"></span>
+        <h3>Расы</h3>
+      </div>
+      <div class="chevron"></div>
     </div>
     <div class="collapsible-content">
       <div class="small muted" style="margin-bottom:8px;">Найдёт системы, где раса соответствует другим выбранным фильтрам (Планеты, Станции и т.д.)</div>
@@ -54,9 +73,13 @@
   </div>
 
   <!-- STATIONS -->
-  <div class="blk" id="filter-block-stations">
+  <div class="blk" id="filter-block-stations" data-filter-group="stations">
     <div class="hdrline">
-      <h3>Станции</h3>
+      <div class="hdr-left">
+        <span class="status-dot"></span>
+        <h3>Станции</h3>
+      </div>
+      <div class="chevron"></div>
     </div>
     <div class="collapsible-content">
       <div class="grid">
@@ -73,9 +96,13 @@
   </div>
 
   <!-- INHABITABLE -->
-  <div class="blk" id="filter-block-inhabitable">
+  <div class="blk" id="filter-block-inhabitable" data-filter-group="inhabitable">
     <div class="hdrline">
-      <h3>Необитаемые планеты</h3>
+      <div class="hdr-left">
+        <span class="status-dot"></span>
+        <h3>Необитаемые планеты</h3>
+      </div>
+      <div class="chevron"></div>
     </div>
     <div class="collapsible-content">
       <div class="grid">
@@ -111,19 +138,30 @@
   </div>
 
   <!-- ROUTE PLANNER -->
-  <div class="blk" id="filter-block-route">
+  <div class="blk" id="filter-block-route" data-filter-group="route">
     <div class="hdrline">
-      <h3>Постройка маршрута</h3>
+      <div class="hdr-left">
+        <span class="status-dot"></span>
+        <h3>Постройка маршрута</h3>
+      </div>
+      <div class="chevron"></div>
     </div>
     <div class="collapsible-content">
       <div class="grid">
         <label>Стартовая система
-          <input id="routeStart" type="search" list="system-list" placeholder="Выберите систему" />
+          <div class="route-input-group">
+            <input id="routeStart" type="search" list="system-list" placeholder="Выберите систему" />
+            <button id="pickRouteStart" class="ghost route-picker-btn" title="Выбрать на карте">🎯</button>
+          </div>
         </label>
         <label>Конечная система
-          <input id="routeEnd" type="search" list="system-list" placeholder="Выберите систему" />
+          <div class="route-input-group">
+            <input id="routeEnd" type="search" list="system-list" placeholder="Выберите систему" />
+            <button id="pickRouteEnd" class="ghost route-picker-btn" title="Выбрать на карте">🎯</button>
+          </div>
         </label>
         <datalist id="system-list"></datalist>
+        <div id="route-picker-status" class="small muted" style="min-height: 1.2em;"></div>
         <div>
           <label for="routeMaxJump">Максимальная дальность прыжка: <span id="routeMaxJumpVal">50</span></label>
           <input id="routeMaxJump" type="range" min="1" max="100" step="1" value="50" />

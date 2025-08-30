@@ -13,7 +13,8 @@ export const STATE = {
   ratio: { h: 33, o: 33, p: 34 },
   labelSize: 12,
   currentRoute: null,
-  lastSearchResults: null
+  lastSearchResults: null,
+  isPickingForRoute: null // null, 'start', or 'end'
 };
 
 export let VIZ = {
