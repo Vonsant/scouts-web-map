@@ -798,13 +798,20 @@ label:has(#ratioSim) input[type=range] {
 
 /* ===== Route Line Styling ===== */
 .route-line {
-  stroke: var(--accent);
-  stroke-width: 3px;
-  stroke-opacity: 0.9;
+  stroke: #fff;
+  stroke-width: 2px;
+  stroke-opacity: 1;
   fill: none;
-  filter: drop-shadow(0 0 5px var(--accent)) drop-shadow(0 0 15px rgba(0,212,255,.5));
+  filter: drop-shadow(0 0 3px #fff) drop-shadow(0 0 8px var(--accent)) drop-shadow(0 0 15px var(--accent));
   stroke-linecap: round;
   stroke-linejoin: round;
+  animation: routePulse 2s infinite ease-in-out;
+}
+
+@keyframes routePulse {
+  50% {
+    filter: drop-shadow(0 0 4px #fff) drop-shadow(0 0 12px var(--accent)) drop-shadow(0 0 25px var(--accent));
+  }
 }
 
 .route-label {
