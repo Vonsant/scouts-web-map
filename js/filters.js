@@ -1,9 +1,10 @@
 import { STATE } from './state.js';
 import { textIncludes, normVector, cosineSim } from './utils.js';
-import { renderDetailsEmpty, renderSummaryList } from './ui.js';
-import { clearHighlight, highlightMultipleSystems } from './map.js';
+import { renderDetailsEmpty, renderSummaryList, handleAccordion } from './ui.js';
+import { clearHighlight, highlightMultipleSystems, drawRoute, clearRoute } from './map.js';
 import { updateHash } from './app.js';
 import * as i18n from './localization.js';
+import { findPath, calculatePathDistance } from './pathfinder.js';
 
 function getFilters() {
   const useGalaxy = document.getElementById('filter-block-galaxy').classList.contains('active');
@@ -220,16 +221,74 @@ export function clearSearch() {
   updateHash({ system: '' });
 }
 
+function runRouting() {
+  const startName = document.getElementById('routeStart').value.trim();
+  const endName = document.getElementById('routeEnd').value.trim();
+  const maxJump = parseFloat(document.getElementById('routeMaxJump').value);
+  const resultEl = document.getElementById('routeResult');
+
+  if (!startName || !endName) {
+    resultEl.textContent = 'Выберите стартовую и конечную системы.';
+    return;
+  }
+
+  const galaxy = STATE.galaxyIndex.get(STATE.currentGalaxyId);
+  if (!galaxy || !galaxy.systems) {
+    resultEl.textContent = 'Ошибка: данные о галактике не загружены.';
+    return;
+  }
+
+  const allSystems = galaxy.systems;
+  const startSystem = allSystems.find(s => (s.name || s.id) === startName);
+  const endSystem = allSystems.find(s => (s.name || s.id) === endName);
+
+  if (!startSystem || !endSystem) {
+    resultEl.textContent = 'Одна из систем не найдена в текущей галактике.';
+    return;
+  }
+
+  // The logic in pathfinder already handles same-galaxy check implicitly
+  // by only searching within the provided nodes. A cross-galaxy check is
+  // not needed here if we only pass systems from the current galaxy.
+
+  const path = findPath(startSystem, endSystem, allSystems, maxJump);
+
+  if (path.length > 0) {
+    const totalDist = calculatePathDistance(path);
+    resultEl.innerHTML = `Маршрут найден! Прыжков: ${path.length - 1}, <br>Дистанция: ${totalDist.toFixed(2)} пк.`;
+    drawRoute(path);
+    highlightMultipleSystems(path.map(s => s.id));
+  } else {
+    resultEl.textContent = 'Маршрут не найден. Попробуйте увеличить дальность прыжка.';
+    clearRoute();
+  }
+}
+
+function clearRouting() {
+    document.getElementById('routeStart').value = '';
+    document.getElementById('routeEnd').value = '';
+    document.getElementById('routeResult').textContent = '';
+    clearRoute();
+    clearHighlight();
+}
+
 export function initFilters() {
     document.getElementById('runSearch').addEventListener('click', runSearch);
     document.getElementById('clearSearch').addEventListener('click', clearSearch);
+    document.getElementById('runRoute').addEventListener('click', runRouting);
+    document.getElementById('clearRoute').addEventListener('click', clearRouting);
 
     // Accordion logic
     document.querySelectorAll('#filters .blk .hdrline').forEach(header => {
-      header.addEventListener('click', () => {
+      header.addEventListener('click', (e) => {
         header.parentElement.classList.toggle('active');
+        handleAccordion(e.currentTarget);
       });
     });
+
+    const maxJumpSlider = document.getElementById('routeMaxJump');
+    const maxJumpVal = document.getElementById('routeMaxJumpVal');
+    maxJumpSlider.addEventListener('input', () => maxJumpVal.textContent = maxJumpSlider.value);
 
     const a = document.getElementById('splitA'),
           b = document.getElementById('splitB');

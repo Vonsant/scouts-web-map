@@ -110,6 +110,33 @@
     </div>
   </div>
 
+  <!-- ROUTE PLANNER -->
+  <div class="blk" id="filter-block-route">
+    <div class="hdrline">
+      <h3>Постройка маршрута</h3>
+    </div>
+    <div class="collapsible-content">
+      <div class="grid">
+        <label>Стартовая система
+          <input id="routeStart" type="search" list="system-list" placeholder="Выберите систему" />
+        </label>
+        <label>Конечная система
+          <input id="routeEnd" type="search" list="system-list" placeholder="Выберите систему" />
+        </label>
+        <datalist id="system-list"></datalist>
+        <div>
+          <label for="routeMaxJump">Максимальная дальность прыжка: <span id="routeMaxJumpVal">50</span></label>
+          <input id="routeMaxJump" type="range" min="1" max="200" step="1" value="50" />
+        </div>
+        <div id="routeResult" class="small" style="min-height: 20px;"></div>
+        <div class="row" style="justify-content: space-between;">
+          <button id="runRoute" class="primary">Проложить</button>
+          <button id="clearRoute" class="ghost">Очистить</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="blk">
     <div class="row" style="justify-content: space-between;">
       <button id="runSearch" class="primary">Найти</button>

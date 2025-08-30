@@ -1,5 +1,5 @@
 import { STATE, VIZ } from './state.js';
-import { selectSystem } from './ui.js';
+import { selectSystem, buildSystemDatalist } from './ui.js';
 import * as i18n from './localization.js';
 
 // Module-level variables for SVG elements
@@ -183,6 +183,7 @@ export function showGalaxy(galaxyId, callback) {
   } else {
       clearHighlight();
   }
+  buildSystemDatalist();
 }
 
 function showTip(event, s) {
@@ -269,4 +270,26 @@ export function highlightMultipleSystems(systemIds) {
         d3.select(`#cell-${id}`).classed('highlight', true);
         d3.select(`#pt-${id}`).classed('highlight', true);
     });
+}
+
+export function drawRoute(path) {
+  clearRoute();
+  if (!path || path.length < 2) return;
+
+  const lineGenerator = d3.line()
+    .x(d => VIZ.scaleX(d.x))
+    .y(d => VIZ.scaleY(d.y));
+
+  d3.select('#edges').append('path')
+    .datum(path)
+    .attr('class', 'route-line')
+    .attr('d', lineGenerator)
+    .attr('fill', 'none')
+    .attr('stroke', 'var(--accent)')
+    .attr('stroke-width', 2)
+    .attr('stroke-dasharray', '5,5');
+}
+
+export function clearRoute() {
+  d3.select('#edges').selectAll('.route-line').remove();
 }

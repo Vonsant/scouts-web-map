@@ -280,4 +280,40 @@ export function buildFiltersUI() {
   raceBox.selectAll('label.race').data(STATE.dict.races).join('label')
     .attr('class', 'race chip')
     .html(d => `<input type="checkbox" value="${d}"> ${i18n.translate(i18n.races, d)}`);
+
+  buildSystemDatalist();
+}
+
+export function buildSystemDatalist() {
+  const galaxy = STATE.galaxyIndex.get(STATE.currentGalaxyId);
+  if (!galaxy) return;
+  const systems = (galaxy.systems || []).map(s => s.name || s.id).sort((a,b) => a.localeCompare(b));
+  const datalist = d3.select('#system-list');
+  datalist.selectAll('option').remove();
+  datalist.selectAll('option')
+    .data(systems)
+    .join('option')
+    .attr('value', d => d);
+}
+
+export function handleAccordion(clickedHeader) {
+  const allBlk = document.querySelectorAll('#filters-inner > .blk');
+  const routeBlk = document.getElementById('filter-block-route');
+  const isRouteHeader = clickedHeader.parentElement === routeBlk;
+
+  if (isRouteHeader) {
+    // If route planner is opened, close all others
+    if (routeBlk.classList.contains('active')) {
+      allBlk.forEach(blk => {
+        if (blk.id !== 'filter-block-route') {
+          blk.classList.remove('active');
+        }
+      });
+    }
+  } else {
+    // If any other filter is opened, close route planner
+    if (clickedHeader.parentElement.classList.contains('active')) {
+      routeBlk.classList.remove('active');
+    }
+  }
 }
