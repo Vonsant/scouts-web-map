@@ -40,6 +40,13 @@ export function renderSystemDetails(s, highlightPlanetIds) {
   const wrap = d3.select('#details');
   wrap.html('');
 
+  const backBtn = document.createElement('button');
+  backBtn.className = 'ghost';
+  backBtn.style.marginBottom = '12px';
+  backBtn.textContent = '‹ Назад к результатам';
+  backBtn.onclick = () => document.getElementById('runSearch').click();
+  wrap.node().appendChild(backBtn);
+
   // System Header (Color and Type removed)
   const head = document.createElement('div');
   head.className = 'card';
@@ -280,4 +287,97 @@ export function buildFiltersUI() {
   raceBox.selectAll('label.race').data(STATE.dict.races).join('label')
     .attr('class', 'race chip')
     .html(d => `<input type="checkbox" value="${d}"> ${i18n.translate(i18n.races, d)}`);
+
+  buildSystemDatalist();
+}
+
+export function renderRouteDetails(route) {
+  const wrap = d3.select('#details');
+  wrap.html('');
+
+  const title = document.createElement('h3');
+  title.textContent = 'Проложенный маршрут';
+  title.style.margin = '0 0 12px 0';
+  wrap.node().appendChild(title);
+
+  const renderPath = (path, startIdx) => {
+    path.forEach((s, i) => {
+      const card = document.createElement('div');
+      card.className = 'card result';
+      card.onclick = () => selectSystem(s.id, []);
+
+      const content = document.createElement('div');
+      content.style.display = 'flex';
+      content.style.alignItems = 'center';
+      content.style.gap = '12px';
+
+      const stepNum = document.createElement('div');
+      stepNum.textContent = `${startIdx + i}.`;
+      stepNum.style.fontWeight = 'bold';
+      stepNum.style.color = 'var(--accent)';
+
+      const sysName = document.createElement('div');
+      sysName.textContent = s.name || s.id;
+
+      content.appendChild(stepNum);
+      content.appendChild(sysName);
+      card.appendChild(content);
+      wrap.node().appendChild(card);
+    });
+  };
+
+  renderPath(route.path1, 1);
+
+  if (route.isCrossGalaxy) {
+    const separator = document.createElement('div');
+    separator.style.textAlign = 'center';
+    separator.style.margin = '10px 0';
+    separator.style.color = 'var(--accent-2)';
+    separator.innerHTML = `--- Межгалактический прыжок ---`;
+    wrap.node().appendChild(separator);
+    renderPath(route.path2, route.path1.length);
+  }
+}
+
+export function buildSystemDatalist() {
+  const allSystemNames = [];
+  if (STATE.data && STATE.data.galaxies) {
+    STATE.data.galaxies.forEach(galaxy => {
+      if (galaxy.systems) {
+        galaxy.systems.forEach(system => {
+          allSystemNames.push(system.name || system.id);
+        });
+      }
+    });
+  }
+  allSystemNames.sort((a, b) => a.localeCompare(b));
+
+  const datalist = d3.select('#system-list');
+  datalist.selectAll('option').remove();
+  datalist.selectAll('option')
+    .data(allSystemNames)
+    .join('option')
+    .attr('value', d => d);
+}
+
+export function handleAccordion(clickedHeader) {
+  const allBlk = document.querySelectorAll('#filters-inner > .blk');
+  const routeBlk = document.getElementById('filter-block-route');
+  const isRouteHeader = clickedHeader.parentElement === routeBlk;
+
+  if (isRouteHeader) {
+    // If route planner is opened, close all others
+    if (routeBlk.classList.contains('active')) {
+      allBlk.forEach(blk => {
+        if (blk.id !== 'filter-block-route') {
+          blk.classList.remove('active');
+        }
+      });
+    }
+  } else {
+    // If any other filter is opened, close route planner
+    if (clickedHeader.parentElement.classList.contains('active')) {
+      routeBlk.classList.remove('active');
+    }
+  }
 }

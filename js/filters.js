@@ -1,9 +1,13 @@
 import { STATE } from './state.js';
 import { textIncludes, normVector, cosineSim } from './utils.js';
-import { renderDetailsEmpty, renderSummaryList } from './ui.js';
-import { clearHighlight, highlightMultipleSystems } from './map.js';
+import { renderDetailsEmpty, renderSummaryList, handleAccordion, renderRouteDetails } from './ui.js';
+import { clearHighlight, highlightMultipleSystems, drawRoute, clearRoute } from './map.js';
 import { updateHash } from './app.js';
 import * as i18n from './localization.js';
+import { findPath } from './pathfinder.js';
+
+const GATE_ANDROMEDA_ID = '67e599a6-b223-4590-8253-96e3ba84c67b';
+const GATE_MILKYWAY_ID = '08556753-48e0-4cf5-a13d-d6f77f7347d7';
 
 function getFilters() {
   const useGalaxy = document.getElementById('filter-block-galaxy').classList.contains('active');
@@ -78,10 +82,15 @@ function approxMatchHOP_byRatio(p, ratioPct, thresholdPct) {
 }
 
 export function runSearch() {
-  clearHighlight();
+  // A new search clears any previous route state.
+  // A new search clears any previous route state.
+  STATE.currentRoute = null;
+  clearRoute();
+
   const f = getFilters();
   const anyUse = f.useGalaxy || f.useSystem || f.usePlanets || f.useStations || f.useInhabitable || f.useRaces;
   if (!anyUse) {
+    STATE.lastSearchResults = null;
     renderDetailsEmpty();
     return;
   }
@@ -103,7 +112,6 @@ export function runSearch() {
       let passedContextual = false;
       let nonRaceFiltersActive = false;
 
-      // Case 1: Races + Stations
       if (f.useStations) {
         nonRaceFiltersActive = true;
         let stationPool = s.stations || [];
@@ -124,7 +132,6 @@ export function runSearch() {
         }
       }
 
-      // Case 2: Races + Planets (Generic)
       if (f.usePlanets) {
         nonRaceFiltersActive = true;
         let planetPool = (s.planets || []).filter(p => p.category === 'habitable');
@@ -145,7 +152,6 @@ export function runSearch() {
         }
       }
 
-      // Case 3: Races + Inhabitable
       if (f.useInhabitable) {
         nonRaceFiltersActive = true;
         let inhabitablePool = (s.planets || []).filter(p => p.category === 'inhabitable');
@@ -172,7 +178,6 @@ export function runSearch() {
         }
       }
 
-      // Case 4: Only Races is selected
       if (f.useRaces && !nonRaceFiltersActive) {
           if (isRacePredominant(s, f.raceChecked)) {
               passedContextual = true;
@@ -183,7 +188,6 @@ export function runSearch() {
       }
 
       if (!nonRaceFiltersActive && !f.useRaces) {
-          // Only basic filters were used (galaxy/system)
           passedContextual = true;
       }
 
@@ -195,6 +199,7 @@ export function runSearch() {
 
   entries.sort((a, b) => (a.system.name || '').localeCompare(b.system.name || ''));
   renderSummaryList(entries);
+  STATE.lastSearchResults = entries;
 
   const systemIds = entries.map(e => e.system.id);
   highlightMultipleSystems(systemIds);
@@ -218,18 +223,120 @@ export function clearSearch() {
   renderDetailsEmpty();
   clearHighlight();
   updateHash({ system: '' });
+  STATE.lastSearchResults = null;
+}
+
+function runRouting() {
+  const startName = document.getElementById('routeStart').value.trim();
+  const endName = document.getElementById('routeEnd').value.trim();
+  const maxJump = parseFloat(document.getElementById('routeMaxJump').value);
+  const resultEl = document.getElementById('routeResult');
+
+  // Clear previous state
+  resultEl.textContent = '';
+  STATE.currentRoute = null;
+  STATE.lastSearchResults = null;
+  clearHighlight();
+
+  if (!startName || !endName) {
+    resultEl.textContent = 'Выберите стартовую и конечную системы.';
+    return;
+  }
+
+  const startRef = Array.from(STATE.systemIndex.values()).find(ref => (ref.system.name || ref.system.id) === startName);
+  const endRef = Array.from(STATE.systemIndex.values()).find(ref => (ref.system.name || ref.system.id) === endName);
+
+  if (!startRef || !endRef) {
+    resultEl.textContent = 'Одна из систем не найдена.';
+    return;
+  }
+
+  const startSystem = startRef.system;
+  const endSystem = endRef.system;
+  const startGalaxyId = startRef.galaxyId;
+  const endGalaxyId = endRef.galaxyId;
+
+  if (startGalaxyId === endGalaxyId) {
+    const galaxy = STATE.galaxyIndex.get(startGalaxyId);
+    const { path, distance } = findPath(startSystem, endSystem, galaxy.systems, maxJump);
+
+    if (path.length > 0) {
+      STATE.currentRoute = { isCrossGalaxy: false, path1: path, path2: null, distance };
+      resultEl.innerHTML = `Маршрут найден! Прыжков: ${path.length - 1}, <br>Дистанция: ${distance} пк.`;
+      drawRoute();
+      renderRouteDetails(STATE.currentRoute);
+    } else {
+      resultEl.textContent = 'Маршрут не найден. Попробуйте увеличить дальность прыжка.';
+      clearRoute();
+      renderDetailsEmpty();
+    }
+  } else {
+    const startGalaxy = STATE.galaxyIndex.get(startGalaxyId);
+    const endGalaxy = STATE.galaxyIndex.get(endGalaxyId);
+
+    const gate1Id = startGalaxy.name === 'Андромеда' ? GATE_ANDROMEDA_ID : GATE_MILKYWAY_ID;
+    const gate2Id = endGalaxy.name === 'Андромеда' ? GATE_ANDROMEDA_ID : GATE_MILKYWAY_ID;
+
+    const gate1 = startGalaxy.systems.find(s => s.id === gate1Id);
+    const gate2 = endGalaxy.systems.find(s => s.id === gate2Id);
+
+    if (!gate1 || !gate2) {
+        resultEl.textContent = 'Ошибка: не найдены врата для межгалактического прыжка.';
+        return;
+    }
+
+    const res1 = findPath(startSystem, gate1, startGalaxy.systems, maxJump);
+    const res2 = findPath(gate2, endSystem, endGalaxy.systems, maxJump);
+
+    if (res1.path.length > 0 && res2.path.length > 0) {
+      const totalDist = res1.distance + res2.distance;
+      const totalJumps = (res1.path.length - 1) + (res2.path.length - 1) + 1;
+      STATE.currentRoute = { isCrossGalaxy: true, path1: res1.path, path2: res2.path, distance: totalDist };
+      resultEl.innerHTML = `Маршрут найден! Прыжков: ${totalJumps}, <br>Дистанция: ${totalDist} пк.`;
+      drawRoute();
+      renderRouteDetails(STATE.currentRoute);
+    } else {
+      resultEl.textContent = 'Не удалось построить полный межгалактический маршрут.';
+      clearRoute();
+      renderDetailsEmpty();
+    }
+  }
+}
+
+export function clearRouting() {
+    document.getElementById('routeStart').value = '';
+    document.getElementById('routeEnd').value = '';
+    document.getElementById('routeResult').textContent = '';
+    STATE.currentRoute = null;
+    clearRoute();
+    clearHighlight();
 }
 
 export function initFilters() {
-    document.getElementById('runSearch').addEventListener('click', runSearch);
-    document.getElementById('clearSearch').addEventListener('click', clearSearch);
+    document.getElementById('runSearch').addEventListener('click', () => {
+      const isRouting = document.getElementById('filter-block-route').classList.contains('active');
+      if (isRouting) {
+        runRouting();
+      } else {
+        runSearch();
+      }
+    });
 
-    // Accordion logic
+    document.getElementById('clearSearch').addEventListener('click', () => {
+      clearSearch();
+      clearRouting();
+    });
+
     document.querySelectorAll('#filters .blk .hdrline').forEach(header => {
-      header.addEventListener('click', () => {
+      header.addEventListener('click', (e) => {
         header.parentElement.classList.toggle('active');
+        handleAccordion(e.currentTarget);
       });
     });
+
+    const maxJumpSlider = document.getElementById('routeMaxJump');
+    const maxJumpVal = document.getElementById('routeMaxJumpVal');
+    maxJumpSlider.addEventListener('input', () => maxJumpVal.textContent = maxJumpSlider.value);
 
     const a = document.getElementById('splitA'),
           b = document.getElementById('splitB');

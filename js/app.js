@@ -2,7 +2,7 @@ import { STATE } from './state.js';
 import { unique } from './utils.js';
 import { initMap, showGalaxy, initStars } from './map.js';
 import { buildFiltersUI, renderDetailsEmpty, selectSystem } from './ui.js';
-import { initFilters, runSearch } from './filters.js';
+import { initFilters, runSearch, clearRouting } from './filters.js';
 
 async function loadComponents() {
   const [filtersHTML, mapHTML] = await Promise.all([
@@ -63,11 +63,11 @@ function onDataLoaded(data) {
   sel.selectAll('option').data(data.galaxies).join('option')
     .attr('value', d => d.id).text(d => d.name || d.id);
   sel.on('change', () => {
-    const val = sel.property('value');
-    showGalaxy(val, () => {
-      runSearch();
-    });
-    updateHash({ galaxy: val, system: '' });
+    const newGalaxyId = sel.property('value');
+    // The showGalaxy function is now smart enough to redraw the correct state.
+    // No complex logic is needed here anymore. Just call it.
+    showGalaxy(newGalaxyId);
+    updateHash({ galaxy: newGalaxyId, system: '' });
   });
 
   const params = new URLSearchParams(location.hash.replace(/^#/, ''));

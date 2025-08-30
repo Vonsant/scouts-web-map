@@ -1,9 +1,10 @@
 import { STATE, VIZ } from './state.js';
-import { selectSystem } from './ui.js';
+import { selectSystem, buildSystemDatalist } from './ui.js';
 import * as i18n from './localization.js';
+import { calculateDistance } from './pathfinder.js';
 
 // Module-level variables for SVG elements
-let svg, gRoot, gCells, gPoints, gLabels, tip, zoom;
+let svg, gRoot, gCells, gPoints, gLabels, gRouteLabels, tip, zoom;
 
 export function initMap() {
   // Initialize selections now that the DOM is ready
@@ -12,6 +13,7 @@ export function initMap() {
   gCells = gRoot.append('g').attr('id', 'cells');
   gRoot.append('g').attr('id', 'edges').attr('class', 'edges'); // Still create the group for order, but don't store it
   gPoints = gRoot.append('g').attr('id', 'points');
+  gRouteLabels = gRoot.append('g').attr('id', 'route-labels');
   gLabels = gRoot.append('g').attr('id', 'labels');
   tip = d3.select('#tip');
 
@@ -183,6 +185,9 @@ export function showGalaxy(galaxyId, callback) {
   } else {
       clearHighlight();
   }
+  // buildSystemDatalist(); // No longer needed here, as the list is now global.
+  drawRoute();
+  drawSearchHighlights();
 }
 
 function showTip(event, s) {
@@ -269,4 +274,69 @@ export function highlightMultipleSystems(systemIds) {
         d3.select(`#cell-${id}`).classed('highlight', true);
         d3.select(`#pt-${id}`).classed('highlight', true);
     });
+}
+
+function drawSearchHighlights() {
+  if (!STATE.lastSearchResults) return;
+
+  const systemIdsInCurrentGalaxy = STATE.lastSearchResults
+    .filter(res => res.galaxyId === STATE.currentGalaxyId)
+    .map(res => res.system.id);
+
+  highlightMultipleSystems(systemIdsInCurrentGalaxy);
+}
+
+export function drawRoute() {
+  clearRoute(); // This now also clears highlights
+  const route = STATE.currentRoute;
+  if (!route || !route.path1) return;
+
+  let pathToDraw = null;
+
+  if (route.isCrossGalaxy) {
+    const path1GalaxyId = STATE.systemIndex.get(route.path1[0].id).galaxyId;
+    if (STATE.currentGalaxyId === path1GalaxyId) {
+      pathToDraw = route.path1;
+    } else if (route.path2 && route.path2.length > 0) {
+      const path2GalaxyId = STATE.systemIndex.get(route.path2[0].id).galaxyId;
+      if (STATE.currentGalaxyId === path2GalaxyId) {
+        pathToDraw = route.path2;
+      }
+    }
+  } else {
+    pathToDraw = route.path1;
+  }
+
+  if (!pathToDraw || pathToDraw.length < 2) return;
+
+  const edges = d3.select('#edges');
+  const labels = d3.select('#route-labels');
+
+  for (let i = 0; i < pathToDraw.length - 1; i++) {
+    const p1 = pathToDraw[i];
+    const p2 = pathToDraw[i+1];
+    const x1 = VIZ.scaleX(p1.x), y1 = VIZ.scaleY(p1.y);
+    const x2 = VIZ.scaleX(p2.x), y2 = VIZ.scaleY(p2.y);
+
+    edges.append('line')
+      .attr('class', 'route-line')
+      .attr('x1', x1).attr('y1', y1)
+      .attr('x2', x2).attr('y2', y2);
+
+    const dist = calculateDistance(p1, p2);
+    labels.append('text')
+      .attr('class', 'route-label')
+      .attr('x', (x1 + x2) / 2)
+      .attr('y', (y1 + y2) / 2 - 10)
+      .text(`${dist} пк`);
+  }
+
+  // Highlight the systems in the visible path
+  highlightMultipleSystems(pathToDraw.map(s => s.id));
+}
+
+export function clearRoute() {
+  d3.select('#edges').selectAll('.route-line').remove();
+  d3.select('#route-labels').selectAll('.route-label').remove();
+  clearHighlight(); // Also clear highlights when clearing a route
 }
