@@ -889,3 +889,33 @@ label:has(#ratioSim) input[type=range] {
   margin: 0;
   border-bottom: 1px solid var(--border);
 }
+
+/* ===== Result Animations ===== */
+@keyframes fade-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.result-card-enter {
+  animation: fade-slide-in 0.5s ease-out forwards;
+}
+
+.no-results-card {
+  text-align: center;
+  padding: 40px 20px;
+  font-size: 18px;
+  color: var(--muted);
+}
+
+.no-results-card .icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  display: block;
+  opacity: 0.5;
+}

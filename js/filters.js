@@ -9,6 +9,13 @@ import { findPath } from './pathfinder.js';
 const GATE_ANDROMEDA_ID = '67e599a6-b223-4590-8253-96e3ba84c67b';
 const GATE_MILKYWAY_ID = '08556753-48e0-4cf5-a13d-d6f77f7347d7';
 
+const FILTERS_STORAGE_KEY = 'galaxyMapFilters';
+const filterInputIds = [
+  'galaxyFilter', 'sysName', 'hasBelt', 'plName', 'plLvlMin', 'plLvlMax',
+  'stType', 'stName', 'stLvlMin', 'stLvlMax', 'splitA', 'splitB', 'ratioSim'
+];
+const filterCheckboxGroupIds = ['raceBox', 'terrainBox', 'resBox'];
+
 function getFilters() {
   const useGalaxy = document.getElementById('filter-block-galaxy').classList.contains('active');
   const useRaces = document.getElementById('filter-block-races').classList.contains('active');
@@ -315,7 +322,82 @@ export function clearSearch() {
   clearHighlight();
   updateHash({ system: '' });
   STATE.lastSearchResults = null;
+  localStorage.removeItem(FILTERS_STORAGE_KEY);
   updateFilterActiveStates(); // Reset dots
+}
+
+function saveFiltersToLocalStorage() {
+  const state = {
+    inputs: {},
+    checkboxes: {},
+    accordions: {}
+  };
+
+  filterInputIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      state.inputs[id] = el.type === 'checkbox' ? el.checked : el.value;
+    }
+  });
+
+  filterCheckboxGroupIds.forEach(id => {
+    state.checkboxes[id] = Array.from(document.querySelectorAll(`#${id} input:checked`)).map(el => el.value);
+  });
+
+  document.querySelectorAll('#filters-inner > .blk[data-filter-group]').forEach(el => {
+    state.accordions[el.id] = el.classList.contains('active');
+  });
+
+  localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(state));
+}
+
+function loadFiltersFromLocalStorage() {
+  const savedState = localStorage.getItem(FILTERS_STORAGE_KEY);
+  if (!savedState) return;
+
+  try {
+    const state = JSON.parse(savedState);
+
+    if (state.inputs) {
+      filterInputIds.forEach(id => {
+        if (state.inputs[id] !== undefined) {
+          const el = document.getElementById(id);
+          if (el) {
+            if (el.type === 'checkbox') {
+              el.checked = state.inputs[id];
+            } else {
+              el.value = state.inputs[id];
+            }
+            // Trigger input event for sliders to update their UI
+            if (el.type === 'range') {
+              el.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+          }
+        }
+      });
+    }
+
+    if (state.checkboxes) {
+      filterCheckboxGroupIds.forEach(id => {
+        if (state.checkboxes[id]) {
+          state.checkboxes[id].forEach(value => {
+            const el = document.querySelector(`#${id} input[value="${value}"]`);
+            if (el) el.checked = true;
+          });
+        }
+      });
+    }
+
+    if (state.accordions) {
+      Object.entries(state.accordions).forEach(([id, isActive]) => {
+        const el = document.getElementById(id);
+        if (el) el.classList.toggle('active', isActive);
+      });
+    }
+  } catch (err) {
+    console.error("Failed to load filters from localStorage", err);
+    localStorage.removeItem(FILTERS_STORAGE_KEY);
+  }
 }
 
 function runRouting() {
@@ -438,6 +520,8 @@ export function clearRouting() {
 }
 
 export function initFilters() {
+    loadFiltersFromLocalStorage();
+
     document.getElementById('pickRouteStart').addEventListener('click', () => toggleRoutePickingMode('start'));
     document.getElementById('pickRouteEnd').addEventListener('click', () => toggleRoutePickingMode('end'));
 
@@ -459,22 +543,22 @@ export function initFilters() {
       header.addEventListener('click', (e) => {
         header.parentElement.classList.toggle('active');
         handleAccordion(e.currentTarget);
+        saveFiltersToLocalStorage(); // Save accordion state
       });
     });
 
-    // Add event listeners to all filter inputs to update status dots
+    // Add event listeners to all filter inputs to update status dots and save to localStorage
     const filterContainer = document.getElementById('filters-inner');
+    const saveData = () => {
+      updateFilterActiveStates();
+      saveFiltersToLocalStorage();
+    };
+
     filterContainer.addEventListener('input', (e) => {
-      // Use event delegation for performance
-      if (e.target.matches('input, select')) {
-        updateFilterActiveStates();
-      }
+      if (e.target.matches('input, select')) saveData();
     });
     filterContainer.addEventListener('change', (e) => {
-      // `change` is needed for checkboxes and selects
-      if (e.target.matches('input[type="checkbox"], select')) {
-        updateFilterActiveStates();
-      }
+      if (e.target.matches('input[type="checkbox"], select')) saveData();
     });
 
 

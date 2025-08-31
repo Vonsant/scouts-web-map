@@ -22,13 +22,17 @@ export function selectSystem(systemId, highlightPlanetIds) {
   updateHash({ system: systemId });
 }
 
-export function renderDetailsEmpty() {
+export function renderDetailsEmpty(isSearchResult = false) {
   const wrap = d3.select('#details');
   wrap.html('');
-  const note = document.createElement('div');
-  note.className = 'muted small';
-  note.textContent = 'Раскройте один из блоков фильтров, чтобы начать поиск.';
-  wrap.node().appendChild(note);
+  const card = document.createElement('div');
+  card.className = 'no-results-card';
+  if (isSearchResult) {
+    card.innerHTML = `<span class="icon">🤷</span>По вашему запросу ничего не найдено. <br><span class="small" style="color:var(--muted);">Попробуйте смягчить условия поиска.</span>`;
+  } else {
+    card.innerHTML = `<span class="icon">✨</span><span class="small">Раскройте один из блоков фильтров, чтобы начать поиск, или выберите систему на карте.</span>`;
+  }
+  wrap.node().appendChild(card);
 }
 
 function getPlanetName(s, id) {
@@ -224,6 +228,12 @@ export function renderSystemDetails(s, highlightPlanetIds) {
 export function renderSummaryList(entries) {
   const wrap = d3.select('#details');
   wrap.html('');
+
+  if (entries.length === 0) {
+    renderDetailsEmpty(true); // true indicates this is a "no results" message
+    return;
+  }
+
   const title = document.createElement('div');
   title.className = 'small muted';
   title.textContent = `Найдено систем: ${entries.length}`;
@@ -231,18 +241,20 @@ export function renderSummaryList(entries) {
 
   let lastGalaxyId = null;
 
-  entries.forEach(({ galaxyId, system: s, reasons, highlightPlanetIds }) => {
+  entries.forEach(({ galaxyId, system: s, reasons, highlightPlanetIds }, i) => {
     if (galaxyId !== lastGalaxyId) {
       const galaxy = STATE.galaxyIndex.get(galaxyId);
       const galaxyHeader = document.createElement('h2');
-      galaxyHeader.className = 'galaxy-result-header';
+      galaxyHeader.className = 'galaxy-result-header result-card-enter';
+      galaxyHeader.style.animationDelay = `${i * 50}ms`;
       galaxyHeader.textContent = galaxy ? (galaxy.name || galaxy.id) : 'Неизвестная галактика';
       wrap.node().appendChild(galaxyHeader);
       lastGalaxyId = galaxyId;
     }
 
     const card = document.createElement('div');
-    card.className = 'card result';
+    card.className = 'card result result-card-enter';
+    card.style.animationDelay = `${i * 50}ms`;
     card.onclick = () => selectSystem(s.id, highlightPlanetIds || []);
     const title = document.createElement('div');
     title.className = 'sysTitle';
