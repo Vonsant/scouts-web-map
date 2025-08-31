@@ -676,6 +676,29 @@ button.ghost:hover{
 }
 
 /* Enhanced SVG styling */
+.system-container {
+  pointer-events: none; /* Pass clicks through to the cell/point */
+}
+
+.asteroid-belt {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.4);
+  stroke-width: 1.5px;
+  stroke-dasharray: 4, 4;
+}
+
+.planet-dot {
+  fill: #ffffff;
+  stroke: #000000;
+  stroke-width: 1px;
+}
+
+.station-dot {
+  fill: var(--accent); /* Use accent color for stations */
+  stroke: #000000;
+  stroke-width: 1px;
+}
+
 svg text{
   fill:var(--fg);
   font-size:14px;

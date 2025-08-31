@@ -5,7 +5,7 @@ import * as i18n from './localization.js';
 import { calculateDistance } from './pathfinder.js';
 
 // Module-level variables for SVG elements
-let svg, gRoot, gCells, gPoints, gLabels, gRouteLabels, tip, zoom;
+let svg, gRoot, gCells, gSystemObjects, gPoints, gLabels, gRouteLabels, tip, zoom;
 
 export function initMap() {
   // Initialize selections now that the DOM is ready
@@ -13,6 +13,7 @@ export function initMap() {
   gRoot = svg.append('g').attr('id', 'root');
   gCells = gRoot.append('g').attr('id', 'cells');
   gRoot.append('g').attr('id', 'edges').attr('class', 'edges'); // Still create the group for order, but don't store it
+  gSystemObjects = gRoot.append('g').attr('id', 'system-objects');
   gPoints = gRoot.append('g').attr('id', 'points');
   gRouteLabels = gRoot.append('g').attr('id', 'route-labels');
   gLabels = gRoot.append('g').attr('id', 'labels');
@@ -187,8 +188,80 @@ export function showGalaxy(galaxyId, callback) {
       clearHighlight();
   }
   // buildSystemDatalist(); // No longer needed here, as the list is now global.
+  drawSystemObjects(systems, xScale, yScale);
   drawRoute();
   drawSearchHighlights();
+}
+
+function calculateSatellitePositions(count, radius) {
+  if (count === 0) return [];
+  const positions = [];
+  const angleStep = (2 * Math.PI) / count;
+  for (let i = 0; i < count; i++) {
+    // Start angle slightly offset to avoid first item being directly to the right
+    const angle = i * angleStep - (Math.PI / 2);
+    positions.push([
+      radius * Math.cos(angle),
+      radius * Math.sin(angle)
+    ]);
+  }
+  return positions;
+}
+
+function drawSystemObjects(systems, xScale, yScale) {
+  const systemObjects = gSystemObjects.selectAll('g.system-container')
+    .data(systems, d => d.id);
+
+  const enterSystemObjects = systemObjects.enter()
+    .append('g')
+    .attr('class', 'system-container')
+    .attr('opacity', 0);
+
+  // Use .each to handle the rendering of children for both enter and update selections
+  enterSystemObjects.merge(systemObjects)
+    .attr('transform', d => `translate(${xScale(d.x)}, ${yScale(d.y)})`) // Update position on redraw
+    .each(function(d) { // `function` keyword is important for `this` context in D3
+      const systemGroup = d3.select(this);
+
+      // Clear previous contents to handle updates correctly
+      systemGroup.selectAll('*').remove();
+
+      const planets = d.planets || [];
+      const stations = d.stations || [];
+      const totalSatellites = planets.length + stations.length;
+      const ORBIT_RADIUS = 14;
+      const SATELLITE_POSITIONS = calculateSatellitePositions(totalSatellites, ORBIT_RADIUS);
+
+      // 1. Asteroid Belt
+      if (d.asteroidBelts && d.asteroidBelts.length > 0) {
+        systemGroup.append('circle')
+          .attr('class', 'asteroid-belt')
+          .attr('r', ORBIT_RADIUS + 5); // Slightly outside the objects
+      }
+
+      // 2. Planets
+      systemGroup.selectAll('.planet-dot')
+        .data(planets)
+        .join('circle')
+          .attr('class', 'planet-dot')
+          .attr('r', 3)
+          .attr('cx', (_, i) => SATELLITE_POSITIONS[i][0])
+          .attr('cy', (_, i) => SATELLITE_POSITIONS[i][1]);
+
+      // 3. Stations
+      systemGroup.selectAll('.station-dot')
+        .data(stations)
+        .join('rect')
+          .attr('class', 'station-dot')
+          .attr('width', 5)
+          .attr('height', 5)
+          .attr('x', (_, i) => SATELLITE_POSITIONS[planets.length + i][0] - 2.5)
+          .attr('y', (_, i) => SATELLITE_POSITIONS[planets.length + i][1] - 2.5);
+    });
+
+  // Handle enter and exit animations
+  enterSystemObjects.transition().duration(600).attr('opacity', 1);
+  systemObjects.exit().transition().duration(400).attr('opacity', 0).remove();
 }
 
 function onSystemClick(_, d) {
