@@ -21,10 +21,6 @@
       <label for="galaxySelect" class="muted small">Галактика</label>
       <select id="galaxySelect" style="min-width:200px"></select>
     </div>
-    <div class="row">
-      <button id="loadLocal" class="ghost">Загрузить JSON…</button>
-      <input type="file" id="fileInput" accept="application/json" style="display:none" />
-    </div>
   </header>
 
   <div id="content">
@@ -36,18 +32,6 @@
 
     <!-- RIGHT: RESULTS / DETAILS -->
     <aside id="details"></aside>
-  </div>
-</div>
-
-<!-- Offline JSON loader -->
-<div id="loaderOverlay">
-  <div id="loaderPanel" class="card">
-    <div class="grid" style="gap:12px">
-      <h2 style="margin:0">Загрузить данные</h2>
-      <div class="muted">Откройте локальный <code>data.json</code> с картой галактик. Панель появляется при запуске офлайн.</div>
-      <div><input type="file" id="overlayFileInput" accept="application/json" /></div>
-      <div id="overlayErr" class="small" style="color:var(--err)"></div>
-    </div>
   </div>
 </div>
 

@@ -88,6 +88,16 @@ header h1{
   background-clip: text;
 }
 
+.filter-info-box {
+  padding: 10px 14px;
+  background: rgba(0, 212, 255, 0.05);
+  border: 1px solid rgba(0, 212, 255, 0.1);
+  border-radius: 12px;
+  font-size: 14px;
+  text-align: center;
+  color: var(--muted);
+}
+
 .pill{
   display:inline-flex;
   align-items:center;
@@ -160,11 +170,15 @@ header h1{
   overflow-x:hidden;
   height:calc(100vh - 112px);
   min-height:0;
-  display:flex;
-  flex-direction:column;
-  gap:14px;
   z-index: 2;
   will-change: transform;
+  scrollbar-gutter: stable;
+}
+
+#filters-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 #details{
@@ -179,26 +193,6 @@ header h1{
   z-index: 2;
   transform: translateZ(0);
   will-change: transform;
-}
-
-/* Force visible scrollbar for filters to test */
-#filters::-webkit-scrollbar{
-  width:10px;
-}
-
-#filters::-webkit-scrollbar-track{
-  background:rgba(42,53,85,.3);
-  border-radius:5px;
-}
-
-#filters::-webkit-scrollbar-thumb{
-  background:linear-gradient(135deg, rgba(0,212,255,.5) 0%, rgba(131,102,255,.5) 100%);
-  border-radius:5px;
-  min-height:30px;
-}
-
-#filters::-webkit-scrollbar-thumb:hover{
-  background:linear-gradient(135deg, rgba(0,212,255,.7) 0%, rgba(131,102,255,.7) 100%);
 }
 
 .blk{
@@ -733,13 +727,13 @@ select optgroup {
   color: var(--fg);
 }
 
-#filter-block-inhabitable .small.muted {
-  font-size: 12px;
-  line-height: 1.25;
+#filter-block-inhabitable .small.muted, .blk .small.muted {
+  font-size: 14px; /* Increased for readability */
+  line-height: 1.4;
 }
 
 label:has(#ratioSim) {
-  font-size: 13px;
+  font-size: 14px; /* Increased for readability */
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -750,15 +744,19 @@ label:has(#ratioSim) input[type=range] {
   margin: 8px 0;
 }
 
-/* Tighter chips for the uninhabitable filter */
+/* Tighter chips for the uninhabitable filter - increased font size */
 #filter-block-inhabitable .tagRow .chip {
-  padding: 5px 8px;
-  font-size: 12px;
+  padding: 5px 10px;
+  font-size: 13px;
 }
 
-#filter-block-inhabitable .chipsRow .chip {
-  padding: 4px 8px;
+/* Specific styles for the ratio display chips */
+#filter-block-inhabitable .double-slider + .chipsRow {
+  flex-wrap: nowrap;
+}
+#filter-block-inhabitable .double-slider + .chipsRow .chip {
   font-size: 12px;
+  padding: 4px 8px;
 }
 
 /* Ensure checkbox groups use a grid layout */
@@ -796,6 +794,48 @@ label:has(#ratioSim) input[type=range] {
   box-shadow: 0 0 25px rgba(0,212,255,.2);
 }
 
+#filters .hdrline {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.hdr-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--accent-2);
+  box-shadow: 0 0 10px var(--accent-2), 0 0 20px var(--accent-2);
+  opacity: 0;
+  transition: opacity .3s;
+}
+
+.blk.filter-active.active .status-dot {
+  opacity: 1;
+}
+
+.chevron {
+  width: 12px;
+  height: 12px;
+  border-style: solid;
+  border-color: var(--muted);
+  border-width: 0 3px 3px 0;
+  transform: rotate(45deg);
+  transition: transform 0.3s ease-out, border-color .3s;
+}
+
+#filters .blk.active .chevron {
+  transform: rotate(-135deg);
+  border-color: var(--fg);
+}
+
+
 /* ===== Route Line Styling ===== */
 .route-line {
   stroke: #fff;
@@ -824,4 +864,66 @@ label:has(#ratioSim) input[type=range] {
   stroke-linejoin: round;
   text-anchor: middle;
   dominant-baseline: middle;
+}
+
+/* ===== Route Planner UI Enhancements ===== */
+.route-input-group {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.route-picker-btn {
+  padding: 8px;
+  min-width: 42px; /* Match height of input */
+  font-size: 18px;
+}
+
+#map.picking-mode {
+  cursor: crosshair;
+}
+
+#route-picker-status {
+  color: var(--accent);
+  text-align: center;
+  font-weight: 500;
+}
+
+.galaxy-result-header {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--accent-2);
+  padding: 16px 0 8px 4px;
+  margin: 0;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ===== Result Animations ===== */
+@keyframes fade-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.result-card-enter {
+  animation: fade-slide-in 0.5s ease-out forwards;
+}
+
+.no-results-card {
+  text-align: center;
+  padding: 40px 20px;
+  font-size: 18px;
+  color: var(--muted);
+}
+
+.no-results-card .icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  display: block;
+  opacity: 0.5;
 }

@@ -9,6 +9,13 @@ import { findPath } from './pathfinder.js';
 const GATE_ANDROMEDA_ID = '67e599a6-b223-4590-8253-96e3ba84c67b';
 const GATE_MILKYWAY_ID = '08556753-48e0-4cf5-a13d-d6f77f7347d7';
 
+const FILTERS_STORAGE_KEY = 'galaxyMapFilters';
+const filterInputIds = [
+  'galaxyFilter', 'sysName', 'hasBelt', 'plName', 'plLvlMin', 'plLvlMax',
+  'stType', 'stName', 'stLvlMin', 'stLvlMax', 'splitA', 'splitB', 'ratioSim'
+];
+const filterCheckboxGroupIds = ['raceBox', 'terrainBox', 'resBox'];
+
 function getFilters() {
   const useGalaxy = document.getElementById('filter-block-galaxy').classList.contains('active');
   const useRaces = document.getElementById('filter-block-races').classList.contains('active');
@@ -197,12 +204,103 @@ export function runSearch() {
     }
   });
 
-  entries.sort((a, b) => (a.system.name || '').localeCompare(b.system.name || ''));
+  // Advanced multi-level sort
+  entries.sort(sortEntries);
+
   renderSummaryList(entries);
   STATE.lastSearchResults = entries;
 
   const systemIds = entries.map(e => e.system.id);
   highlightMultipleSystems(systemIds);
+}
+
+export function resortAndRenderResults() {
+  if (!STATE.lastSearchResults) return;
+  STATE.lastSearchResults.sort(sortEntries);
+  renderSummaryList(STATE.lastSearchResults);
+}
+
+function sortEntries(a, b) {
+  const currentGalaxyId = STATE.currentGalaxyId;
+  const isAGalaxyCurrent = a.galaxyId === currentGalaxyId;
+  const isBGalaxyCurrent = b.galaxyId === currentGalaxyId;
+
+  // 1. Prioritize the current galaxy
+  if (isAGalaxyCurrent && !isBGalaxyCurrent) return -1;
+  if (!isAGalaxyCurrent && isBGalaxyCurrent) return 1;
+
+  // 2. If priority is same, sort by galaxy name
+  const galA = STATE.galaxyIndex.get(a.galaxyId)?.name || a.galaxyId;
+  const galB = STATE.galaxyIndex.get(b.galaxyId)?.name || b.galaxyId;
+  const galCompare = galA.localeCompare(galB);
+  if (galCompare !== 0) return galCompare;
+
+  // 3. If galaxies are the same, sort by system name
+  return (a.system.name || a.system.id).localeCompare(b.system.name || b.system.id);
+}
+
+function updateFilterActiveStates() {
+  const groups = {
+    galaxy: [
+      { id: 'galaxyFilter', type: 'select' },
+    ],
+    system: [
+      { id: 'sysName', type: 'text' },
+      { id: 'hasBelt', type: 'check' },
+    ],
+    planets: [
+      { id: 'plName', type: 'text' },
+      { id: 'plLvlMin', type: 'text' },
+      { id: 'plLvlMax', type: 'text' },
+    ],
+    races: [
+      { id: 'raceBox', type: 'any_check' },
+    ],
+    stations: [
+      { id: 'stType', type: 'select' },
+      { id: 'stName', type: 'text' },
+      { id: 'stLvlMin', type: 'text' },
+      { id: 'stLvlMax', type: 'text' },
+    ],
+    inhabitable: [
+      { id: 'terrainBox', type: 'any_check' },
+      { id: 'resBox', type: 'any_check' },
+      { id: 'ratioSim', type: 'range', defaultValue: 0 },
+    ],
+    route: [
+      { id: 'routeStart', type: 'text' },
+      { id: 'routeEnd', type: 'text' },
+    ]
+  };
+
+  for (const [groupName, inputs] of Object.entries(groups)) {
+    const block = document.getElementById(`filter-block-${groupName}`);
+    if (!block) continue;
+
+    let isActive = false;
+    for (const input of inputs) {
+      const el = document.getElementById(input.id);
+      if (!el) continue;
+
+      switch (input.type) {
+        case 'text':
+        case 'select':
+          if (el.value.trim()) isActive = true;
+          break;
+        case 'check':
+          if (el.checked) isActive = true;
+          break;
+        case 'any_check':
+          if (el.querySelector('input:checked')) isActive = true;
+          break;
+        case 'range':
+          if (Number(el.value) !== (input.defaultValue || 0)) isActive = true;
+          break;
+      }
+      if (isActive) break;
+    }
+    block.classList.toggle('filter-active', isActive);
+  }
 }
 
 export function clearSearch() {
@@ -224,6 +322,82 @@ export function clearSearch() {
   clearHighlight();
   updateHash({ system: '' });
   STATE.lastSearchResults = null;
+  localStorage.removeItem(FILTERS_STORAGE_KEY);
+  updateFilterActiveStates(); // Reset dots
+}
+
+function saveFiltersToLocalStorage() {
+  const state = {
+    inputs: {},
+    checkboxes: {},
+    accordions: {}
+  };
+
+  filterInputIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      state.inputs[id] = el.type === 'checkbox' ? el.checked : el.value;
+    }
+  });
+
+  filterCheckboxGroupIds.forEach(id => {
+    state.checkboxes[id] = Array.from(document.querySelectorAll(`#${id} input:checked`)).map(el => el.value);
+  });
+
+  document.querySelectorAll('#filters-inner > .blk[data-filter-group]').forEach(el => {
+    state.accordions[el.id] = el.classList.contains('active');
+  });
+
+  localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(state));
+}
+
+function loadFiltersFromLocalStorage() {
+  const savedState = localStorage.getItem(FILTERS_STORAGE_KEY);
+  if (!savedState) return;
+
+  try {
+    const state = JSON.parse(savedState);
+
+    if (state.inputs) {
+      filterInputIds.forEach(id => {
+        if (state.inputs[id] !== undefined) {
+          const el = document.getElementById(id);
+          if (el) {
+            if (el.type === 'checkbox') {
+              el.checked = state.inputs[id];
+            } else {
+              el.value = state.inputs[id];
+            }
+            // Trigger input event for sliders to update their UI
+            if (el.type === 'range') {
+              el.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+          }
+        }
+      });
+    }
+
+    if (state.checkboxes) {
+      filterCheckboxGroupIds.forEach(id => {
+        if (state.checkboxes[id]) {
+          state.checkboxes[id].forEach(value => {
+            const el = document.querySelector(`#${id} input[value="${value}"]`);
+            if (el) el.checked = true;
+          });
+        }
+      });
+    }
+
+    if (state.accordions) {
+      Object.entries(state.accordions).forEach(([id, isActive]) => {
+        const el = document.getElementById(id);
+        if (el) el.classList.toggle('active', isActive);
+      });
+    }
+  } catch (err) {
+    console.error("Failed to load filters from localStorage", err);
+    localStorage.removeItem(FILTERS_STORAGE_KEY);
+  }
 }
 
 function runRouting() {
@@ -303,6 +477,36 @@ function runRouting() {
   }
 }
 
+function toggleRoutePickingMode(target = null) {
+  const statusEl = document.getElementById('route-picker-status');
+  const mapEl = document.getElementById('map');
+
+  // If a target is provided, enter picking mode
+  if (target) {
+    STATE.isPickingForRoute = target;
+    const targetName = target === 'start' ? 'стартовую' : 'конечную';
+    statusEl.textContent = `Выберите ${targetName} систему на карте...`;
+    mapEl.classList.add('picking-mode');
+  } else {
+    // If no target, exit picking mode
+    STATE.isPickingForRoute = null;
+    statusEl.textContent = '';
+    mapEl.classList.remove('picking-mode');
+  }
+}
+
+export function setSystemForRoutePicker(systemName) {
+  if (!STATE.isPickingForRoute) return;
+
+  const inputId = STATE.isPickingForRoute === 'start' ? 'routeStart' : 'routeEnd';
+  document.getElementById(inputId).value = systemName;
+
+  // Manually trigger input event for reactivity
+  document.getElementById(inputId).dispatchEvent(new Event('input'));
+
+  toggleRoutePickingMode(null); // Exit picking mode
+}
+
 export function clearRouting() {
     document.getElementById('routeStart').value = '';
     document.getElementById('routeEnd').value = '';
@@ -310,9 +514,17 @@ export function clearRouting() {
     STATE.currentRoute = null;
     clearRoute();
     clearHighlight();
+    if (STATE.isPickingForRoute) {
+      toggleRoutePickingMode(null);
+    }
 }
 
 export function initFilters() {
+    loadFiltersFromLocalStorage();
+
+    document.getElementById('pickRouteStart').addEventListener('click', () => toggleRoutePickingMode('start'));
+    document.getElementById('pickRouteEnd').addEventListener('click', () => toggleRoutePickingMode('end'));
+
     document.getElementById('runSearch').addEventListener('click', () => {
       const isRouting = document.getElementById('filter-block-route').classList.contains('active');
       if (isRouting) {
@@ -331,8 +543,24 @@ export function initFilters() {
       header.addEventListener('click', (e) => {
         header.parentElement.classList.toggle('active');
         handleAccordion(e.currentTarget);
+        saveFiltersToLocalStorage(); // Save accordion state
       });
     });
+
+    // Add event listeners to all filter inputs to update status dots and save to localStorage
+    const filterContainer = document.getElementById('filters-inner');
+    const saveData = () => {
+      updateFilterActiveStates();
+      saveFiltersToLocalStorage();
+    };
+
+    filterContainer.addEventListener('input', (e) => {
+      if (e.target.matches('input, select')) saveData();
+    });
+    filterContainer.addEventListener('change', (e) => {
+      if (e.target.matches('input[type="checkbox"], select')) saveData();
+    });
+
 
     const maxJumpSlider = document.getElementById('routeMaxJump');
     const maxJumpVal = document.getElementById('routeMaxJumpVal');
@@ -369,4 +597,7 @@ export function initFilters() {
     b.addEventListener('input', updateDouble);
     sim.addEventListener('input', () => simVal.textContent = sim.value);
     updateDouble();
+
+    // Set initial active states for filters
+    updateFilterActiveStates();
 }

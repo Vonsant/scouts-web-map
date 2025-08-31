@@ -1,5 +1,6 @@
 import { STATE, VIZ } from './state.js';
 import { selectSystem, buildSystemDatalist } from './ui.js';
+import { setSystemForRoutePicker } from './filters.js';
 import * as i18n from './localization.js';
 import { calculateDistance } from './pathfinder.js';
 
@@ -135,7 +136,7 @@ export function showGalaxy(galaxyId, callback) {
       .attr('opacity', 0)
       .on('mousemove', (event, d) => showTip(event, d))
       .on('mouseleave', hideTip)
-      .on('click', (_, d) => selectSystem(d.id, []))
+      .on('click', onSystemClick)
       .call(e => e.transition().duration(600).attr('opacity', .85)),
     update => update
       .attr('d', (_, i) => VIZ.voronoi.renderCell(i))
@@ -155,7 +156,7 @@ export function showGalaxy(galaxyId, callback) {
       .attr('fill', '#ffffff')
       .on('mousemove', (event, d) => showTip(event, d))
       .on('mouseleave', hideTip)
-      .on('click', (_, d) => selectSystem(d.id, [])),
+      .on('click', onSystemClick),
     update => update.attr('cx', d => xScale(d.x)).attr('cy', d => yScale(d.y)),
     exit => exit.remove()
   );
@@ -188,6 +189,14 @@ export function showGalaxy(galaxyId, callback) {
   // buildSystemDatalist(); // No longer needed here, as the list is now global.
   drawRoute();
   drawSearchHighlights();
+}
+
+function onSystemClick(_, d) {
+  if (STATE.isPickingForRoute) {
+    setSystemForRoutePicker(d.name || d.id);
+  } else {
+    selectSystem(d.id, []);
+  }
 }
 
 function showTip(event, s) {
@@ -304,7 +313,11 @@ export function drawRoute() {
       }
     }
   } else {
-    pathToDraw = route.path1;
+    // For a single-galaxy route, check it belongs to the current galaxy
+    const routeGalaxyId = STATE.systemIndex.get(route.path1[0].id).galaxyId;
+    if (STATE.currentGalaxyId === routeGalaxyId) {
+      pathToDraw = route.path1;
+    }
   }
 
   if (!pathToDraw || pathToDraw.length < 2) return;
