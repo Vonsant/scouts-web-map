@@ -166,7 +166,7 @@ export function showGalaxy(galaxyId, callback) {
   labels.join(
     enter => enter.append('text')
       .attr('x', d => xScale(d.x))
-      .attr('y', d => yScale(d.y) + 20)
+      .attr('y', d => yScale(d.y) + 28)
       .attr('text-anchor', 'middle')
       .text(d => d.name || d.id)
       .style('font-size', STATE.labelSize + 'px')
@@ -229,7 +229,7 @@ function drawSystemObjects(systems, xScale, yScale) {
       const planets = d.planets || [];
       const stations = d.stations || [];
       const totalSatellites = planets.length + stations.length;
-      const ORBIT_RADIUS = 14;
+      const ORBIT_RADIUS = 16;
       const SATELLITE_POSITIONS = calculateSatellitePositions(totalSatellites, ORBIT_RADIUS);
 
       // 1. Asteroid Belt
@@ -243,8 +243,8 @@ function drawSystemObjects(systems, xScale, yScale) {
       systemGroup.selectAll('.planet-dot')
         .data(planets)
         .join('circle')
-          .attr('class', 'planet-dot')
-          .attr('r', 3)
+          .attr('class', p => `planet-dot planet--${p.category}`)
+          .attr('r', 4)
           .attr('cx', (_, i) => SATELLITE_POSITIONS[i][0])
           .attr('cy', (_, i) => SATELLITE_POSITIONS[i][1]);
 
@@ -253,15 +253,15 @@ function drawSystemObjects(systems, xScale, yScale) {
         .data(stations)
         .join('rect')
           .attr('class', 'station-dot')
-          .attr('width', 5)
-          .attr('height', 5)
-          .attr('x', (_, i) => SATELLITE_POSITIONS[planets.length + i][0] - 2.5)
-          .attr('y', (_, i) => SATELLITE_POSITIONS[planets.length + i][1] - 2.5);
+          .attr('width', 6)
+          .attr('height', 6)
+          .attr('x', (_, i) => SATELLITE_POSITIONS[planets.length + i][0] - 3)
+          .attr('y', (_, i) => SATELLITE_POSITIONS[planets.length + i][1] - 3);
     });
 
   // Handle enter and exit animations
   enterSystemObjects.transition().duration(600).attr('opacity', 1);
-  systemObjects.exit().transition().duration(400).attr('opacity', 0).remove();
+  systemObjects.exit().remove();
 }
 
 function onSystemClick(_, d) {
