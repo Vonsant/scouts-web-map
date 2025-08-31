@@ -745,10 +745,18 @@ label:has(#ratioSim) input[type=range] {
 }
 
 /* Tighter chips for the uninhabitable filter - increased font size */
-#filter-block-inhabitable .tagRow .chip,
-#filter-block-inhabitable .chipsRow .chip {
+#filter-block-inhabitable .tagRow .chip {
   padding: 5px 10px;
   font-size: 13px;
+}
+
+/* Specific styles for the ratio display chips */
+#filter-block-inhabitable .double-slider + .chipsRow {
+  flex-wrap: nowrap;
+}
+#filter-block-inhabitable .double-slider + .chipsRow .chip {
+  font-size: 12px;
+  padding: 4px 8px;
 }
 
 /* Ensure checkbox groups use a grid layout */
