@@ -35,7 +35,9 @@ export function initMap() {
     gLabels.attr('display', e.target.checked ? null : 'none');
   });
   document.getElementById('togglePoints').addEventListener('change', e => {
-    gPoints.attr('display', e.target.checked ? null : 'none');
+    const isVisible = e.target.checked;
+    gPoints.attr('display', isVisible ? null : 'none');
+    gSystemObjects.attr('display', isVisible ? null : 'none');
   });
 
   const labelSizeSlider = document.getElementById('labelSize');
@@ -166,7 +168,7 @@ export function showGalaxy(galaxyId, callback) {
   labels.join(
     enter => enter.append('text')
       .attr('x', d => xScale(d.x))
-      .attr('y', d => yScale(d.y) + 28)
+      .attr('y', d => yScale(d.y) + 32)
       .attr('text-anchor', 'middle')
       .text(d => d.name || d.id)
       .style('font-size', STATE.labelSize + 'px')
@@ -174,7 +176,7 @@ export function showGalaxy(galaxyId, callback) {
       .call(e => e.transition().duration(400).attr('opacity', .9)),
     update => update
       .attr('x', d => xScale(d.x))
-      .attr('y', d => yScale(d.y) + 20)
+      .attr('y', d => yScale(d.y) + 32)
       .attr('text-anchor', 'middle')
       .text(d => d.name || d.id)
       .style('font-size', STATE.labelSize + 'px')
