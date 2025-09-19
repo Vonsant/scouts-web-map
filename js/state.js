@@ -8,13 +8,15 @@ export const STATE = {
     terrains: [],
     res: [],
     stTypes: [],
-    galaxies: []
+    galaxies: [],
+    resourceRates: []
   },
   ratio: { h: 33, o: 33, p: 34 },
   labelSize: 12,
   currentRoute: null,
   lastSearchResults: null,
-  isPickingForRoute: null // null, 'start', or 'end'
+  isPickingForRoute: null, // null, 'start', or 'end'
+  activeResourceRateFilter: null
 };
 
 export let VIZ = {

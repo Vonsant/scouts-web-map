@@ -136,6 +136,69 @@ export function renderSystemDetails(s, highlightPlanetIds) {
             });
             card.appendChild(tags);
         }
+        if (p.resourceGeneration && Object.keys(p.resourceGeneration).length) {
+            const resBlock = document.createElement('details');
+            resBlock.className = 'planetResourceBlock';
+
+            const summary = document.createElement('summary');
+            summary.className = 'planetResourceBlock__summary';
+
+            const resTitle = document.createElement('span');
+            resTitle.className = 'planetResourceBlock__title';
+            resTitle.textContent = 'Генерация ресурсов (в час)';
+            summary.appendChild(resTitle);
+
+            resBlock.appendChild(summary);
+
+            if (highlightSet.has(p.id)) {
+                resBlock.open = true;
+            }
+
+            const resourceEntries = Object.entries(p.resourceGeneration)
+                .filter(([, rate]) => typeof rate === 'number' && Number.isFinite(rate) && rate > 0);
+
+            if (resourceEntries.length) {
+                const resourceOrder = new Map();
+                Object.keys(i18n.resources || {}).forEach((key, index) => {
+                    resourceOrder.set(key, index);
+                });
+
+                resourceEntries.sort(([keyA], [keyB]) => {
+                    const orderA = resourceOrder.has(keyA) ? resourceOrder.get(keyA) : Number.POSITIVE_INFINITY;
+                    const orderB = resourceOrder.has(keyB) ? resourceOrder.get(keyB) : Number.POSITIVE_INFINITY;
+                    if (orderA !== orderB) return orderA - orderB;
+                    return keyA.localeCompare(keyB);
+                });
+
+                const grid = document.createElement('div');
+                grid.className = 'planetResourceBlock__grid';
+
+                resourceEntries.forEach(([key, rate]) => {
+                    const item = document.createElement('div');
+                    item.className = 'planetResourceBlock__item';
+
+                    const label = document.createElement('span');
+                    label.className = 'planetResourceBlock__label';
+                    label.textContent = i18n.translate(i18n.resources, key);
+
+                    const value = document.createElement('span');
+                    value.className = 'planetResourceBlock__value';
+                    value.textContent = rate.toFixed(1);
+
+                    item.appendChild(label);
+                    item.appendChild(value);
+                    grid.appendChild(item);
+                });
+
+                resBlock.appendChild(grid);
+            } else {
+                const empty = document.createElement('div');
+                empty.className = 'planetResourceBlock__empty muted';
+                empty.textContent = 'Нет генерации ресурсов';
+                resBlock.appendChild(empty);
+            }
+            card.appendChild(resBlock);
+        }
         plGrid.appendChild(card);
     });
     blkPl.appendChild(plGrid);
@@ -241,7 +304,8 @@ export function renderSummaryList(entries) {
 
   let lastGalaxyId = null;
 
-  entries.forEach(({ galaxyId, system: s, reasons, highlightPlanetIds }, i) => {
+  entries.forEach((entry, i) => {
+    const { galaxyId, system: s, reasons, highlightPlanetIds, meta } = entry;
     if (galaxyId !== lastGalaxyId) {
       const galaxy = STATE.galaxyIndex.get(galaxyId);
       const galaxyHeader = document.createElement('h2');
@@ -269,6 +333,59 @@ export function renderSummaryList(entries) {
       why.className = 'small muted';
       why.textContent = reasons.join(' • ');
       card.appendChild(why);
+    }
+    const resourceMeta = meta && meta.resourceRates;
+    if (resourceMeta && resourceMeta.matches && resourceMeta.matches.length) {
+      const wrap = document.createElement('div');
+      wrap.className = 'resourceRateSummaryWrap';
+
+      const titleEl = document.createElement('span');
+      titleEl.className = 'resourceRateSummary__title muted';
+      const selectedLabels = resourceMeta.selected.map(r => r.label).join(', ');
+      titleEl.textContent = `Подходящие планеты (${selectedLabels})`;
+      wrap.appendChild(titleEl);
+
+      const table = document.createElement('table');
+      table.className = 'resourceRateSummary';
+
+      const thead = document.createElement('thead');
+      const headRow = document.createElement('tr');
+      const planetHead = document.createElement('th');
+      planetHead.textContent = 'Планета';
+      headRow.appendChild(planetHead);
+      resourceMeta.selected.forEach(sel => {
+        const th = document.createElement('th');
+        th.textContent = sel.label;
+        headRow.appendChild(th);
+      });
+      const totalHead = document.createElement('th');
+      totalHead.textContent = 'Всего';
+      headRow.appendChild(totalHead);
+      thead.appendChild(headRow);
+      table.appendChild(thead);
+
+      const tbody = document.createElement('tbody');
+      resourceMeta.matches.forEach(match => {
+        const row = document.createElement('tr');
+        const planetCell = document.createElement('td');
+        planetCell.textContent = match.planetName;
+        row.appendChild(planetCell);
+        resourceMeta.selected.forEach(sel => {
+          const valueCell = document.createElement('td');
+          valueCell.className = 'resourceRateSummary__value';
+          const val = match.values[sel.key];
+          valueCell.textContent = (typeof val === 'number' && Number.isFinite(val)) ? val.toFixed(1) : '0.0';
+          row.appendChild(valueCell);
+        });
+        const totalCell = document.createElement('td');
+        totalCell.className = 'resourceRateSummary__value';
+        totalCell.textContent = match.sum.toFixed(1);
+        row.appendChild(totalCell);
+        tbody.appendChild(row);
+      });
+      table.appendChild(tbody);
+      wrap.appendChild(table);
+      card.appendChild(wrap);
     }
     if (highlightPlanetIds && highlightPlanetIds.length) {
       const chips = document.createElement('div');
@@ -305,6 +422,18 @@ export function buildFiltersUI() {
   resBox.selectAll('label.res').data(STATE.dict.res).join('label')
     .attr('class', 'res chip')
     .html(d => `<input type="checkbox" value="${d}"> ${i18n.translate(i18n.resources, d)}`);
+
+  const resourceRateBox = d3.select('#resourceRateBox');
+  if (!resourceRateBox.empty()) {
+    const rateOptions = (STATE.dict.resourceRates || []).slice().sort((a, b) => {
+      const labelA = i18n.translate(i18n.resources, a) || a;
+      const labelB = i18n.translate(i18n.resources, b) || b;
+      return labelA.localeCompare(labelB, 'ru');
+    });
+    resourceRateBox.selectAll('label.resource-rate').data(rateOptions).join('label')
+      .attr('class', 'resource-rate chip')
+      .html(d => `<input type="checkbox" value="${d}"> ${i18n.translate(i18n.resources, d) || d}`);
+  }
 
   const raceBox = d3.select('#raceBox');
   raceBox.selectAll('label.race').data(STATE.dict.races).join('label')
@@ -386,21 +515,26 @@ export function buildSystemDatalist() {
 export function handleAccordion(clickedHeader) {
   const allBlk = document.querySelectorAll('#filters-inner > .blk');
   const routeBlk = document.getElementById('filter-block-route');
-  const isRouteHeader = clickedHeader.parentElement === routeBlk;
+  const resourceBlk = document.getElementById('filter-block-resource-rates');
+  const parentBlk = clickedHeader.parentElement;
+  const isRouteHeader = parentBlk === routeBlk;
+  const isResourceHeader = parentBlk === resourceBlk;
 
-  if (isRouteHeader) {
-    // If route planner is opened, close all others
-    if (routeBlk.classList.contains('active')) {
+  if (isRouteHeader || isResourceHeader) {
+    const activeBlk = isRouteHeader ? routeBlk : resourceBlk;
+    // If a special block is opened, close all others
+    if (activeBlk.classList.contains('active')) {
       allBlk.forEach(blk => {
-        if (blk.id !== 'filter-block-route') {
+        if (blk !== activeBlk) {
           blk.classList.remove('active');
         }
       });
     }
   } else {
-    // If any other filter is opened, close route planner
-    if (clickedHeader.parentElement.classList.contains('active')) {
+    // If any other filter is opened, close special blocks
+    if (parentBlk.classList.contains('active')) {
       routeBlk.classList.remove('active');
+      resourceBlk.classList.remove('active');
     }
   }
 }

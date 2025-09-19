@@ -24,18 +24,35 @@ export const terrains = {
 };
 
 export const resources = {
-  'natrium': 'Натрий',
-  'titanium': 'Титан',
-  'aluminium': 'Алюминий',
-  'ferrum': 'Железо',
-  'hydrogen': 'Водород',
-  'aurum': 'Золото',
-  'cuprum': 'Медь',
-  'oxygen': 'Кислород',
-  'helium': 'Гелий',
-  'tritium': 'Тритий',
   'minerals': 'Минералы',
-  'carbon': 'Углерод'
+  'hydrogen': 'Водород',
+  'tritium': 'Тритий',
+  'helium': 'Гелий',
+  'oxygen': 'Кислород',
+  'carbon': 'Углерод',
+  'natrium': 'Натрий',
+  'aluminium': 'Алюминий',
+  'titanium': 'Титан',
+  'cuprum': 'Медь',
+  'ferrum': 'Железо',
+  'aurum': 'Золото',
+  'reagents': 'Химикаты',
+  'metalPlates': 'Металлическая обшивка',
+  'compositeMaterials': 'Композитные материалы',
+  'superconductors': 'Сверхпроводники',
+  'electronics': 'Электронные компоненты',
+  'carbonFiber': 'Углеволокно',
+  'batteries': 'Батареи',
+  'magneticCoils': 'Магнитные кольца',
+  'opticCrystals': 'Оптические кристаллы',
+  'polymers': 'Полимеры',
+  'robomodules': 'Роботизированные модули',
+  'syntheticMaterials': 'Синтетические материалы',
+  'insulators': 'Изолирующие материалы',
+  'food': 'Продукты питания',
+  'alcohol': 'Алкоголь',
+  'medicine': 'Медикаменты',
+  'drugs': 'Наркотики'
 };
 
 export const economics = {

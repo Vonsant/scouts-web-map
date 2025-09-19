@@ -14,7 +14,7 @@ const filterInputIds = [
   'galaxyFilter', 'sysName', 'hasBelt', 'plName', 'plLvlMin', 'plLvlMax',
   'stType', 'stName', 'stLvlMin', 'stLvlMax', 'splitA', 'splitB', 'ratioSim'
 ];
-const filterCheckboxGroupIds = ['raceBox', 'terrainBox', 'resBox'];
+const filterCheckboxGroupIds = ['raceBox', 'terrainBox', 'resBox', 'resourceRateBox'];
 
 function getFilters() {
   const useGalaxy = document.getElementById('filter-block-galaxy').classList.contains('active');
@@ -23,11 +23,12 @@ function getFilters() {
   const usePlanets = document.getElementById('filter-block-planets').classList.contains('active');
   const useStations = document.getElementById('filter-block-stations').classList.contains('active');
   const useInhabitable = document.getElementById('filter-block-inhabitable').classList.contains('active');
+  const useResourceRates = document.getElementById('filter-block-resource-rates').classList.contains('active');
 
   const raceChecked = Array.from(document.querySelectorAll('#raceBox input[type="checkbox"]:checked')).map(el => el.value);
 
   return {
-    useGalaxy, useRaces, useSystem, usePlanets, useStations, useInhabitable,
+    useGalaxy, useRaces, useSystem, usePlanets, useStations, useInhabitable, useResourceRates,
     galaxyId: document.getElementById('galaxyFilter').value,
     sysName: document.getElementById('sysName').value.trim(),
     hasBelt: document.getElementById('hasBelt').checked,
@@ -41,6 +42,7 @@ function getFilters() {
     stLvlMax: parseInt(document.getElementById('stLvlMax').value || ''),
     terrainChecked: Array.from(document.querySelectorAll('#terrainBox input[type="checkbox"]:checked')).map(el => el.value),
     resChecked: Array.from(document.querySelectorAll('#resBox input[type="checkbox"]:checked')).map(el => el.value.toLowerCase()),
+    resourceRateChecked: Array.from(document.querySelectorAll('#resourceRateBox input[type="checkbox"]:checked')).map(el => el.value),
     ratioSim: parseInt(document.getElementById('ratioSim').value, 10),
     ratio: STATE.ratio,
   };
@@ -95,9 +97,13 @@ export function runSearch() {
   clearRoute();
 
   const f = getFilters();
-  const anyUse = f.useGalaxy || f.useSystem || f.usePlanets || f.useStations || f.useInhabitable || f.useRaces;
+  const anyUse = f.useGalaxy || f.useSystem || f.usePlanets || f.useStations || f.useInhabitable || f.useRaces || f.useResourceRates;
+  STATE.activeResourceRateFilter = (f.useResourceRates && f.resourceRateChecked.length)
+    ? { selected: f.resourceRateChecked.slice() }
+    : null;
   if (!anyUse) {
     STATE.lastSearchResults = null;
+    STATE.activeResourceRateFilter = null;
     renderDetailsEmpty();
     return;
   }
@@ -107,6 +113,7 @@ export function runSearch() {
     systems: for (const s of (g.systems || [])) {
       const reasons = [];
       const matchedPlanetIds = new Set();
+      const entryMeta = {};
 
       // --- Basic Filters (always AND) ---
       if (f.useGalaxy && f.galaxyId && g.id !== f.galaxyId) continue systems;
@@ -185,6 +192,60 @@ export function runSearch() {
         }
       }
 
+      if (f.useResourceRates) {
+        nonRaceFiltersActive = true;
+        const selectedResources = f.resourceRateChecked;
+        if (!selectedResources.length) continue systems;
+
+        const resourceMatches = [];
+        (s.planets || []).forEach(p => {
+          if (!p || !p.resourceGeneration) return;
+          const values = {};
+          let allPositive = true;
+          let sum = 0;
+          for (const key of selectedResources) {
+            const rate = Number(p.resourceGeneration[key] || 0);
+            if (!(rate > 0)) {
+              allPositive = false;
+              break;
+            }
+            const rounded = Math.round(rate * 10) / 10;
+            values[key] = rounded;
+            sum += rounded;
+          }
+          if (allPositive) {
+            const roundedSum = Math.round(sum * 10) / 10;
+            resourceMatches.push({
+              planet: p,
+              planetId: p.id,
+              planetName: p.name || p.id,
+              values,
+              sum: roundedSum
+            });
+          }
+        });
+
+        if (resourceMatches.length) {
+          resourceMatches.sort((a, b) => b.sum - a.sum);
+          resourceMatches.forEach(match => matchedPlanetIds.add(match.planetId));
+          passedContextual = true;
+          const localized = selectedResources.map(resKey => i18n.translate(i18n.resources, resKey) || resKey);
+          reasons.push(`Генерация: ${localized.join(', ')}`);
+          entryMeta.resourceRates = {
+            selected: selectedResources.map(key => ({ key, label: i18n.translate(i18n.resources, key) || key })),
+            matches: resourceMatches.map(match => ({
+              planetId: match.planetId,
+              planetName: match.planetName,
+              values: match.values,
+              sum: match.sum
+            })),
+            score: resourceMatches[0].sum
+          };
+        } else {
+          continue systems;
+        }
+      }
+
       if (f.useRaces && !nonRaceFiltersActive) {
           if (isRacePredominant(s, f.raceChecked)) {
               passedContextual = true;
@@ -199,7 +260,7 @@ export function runSearch() {
       }
 
       if (passedContextual) {
-        entries.push({ galaxyId: g.id, system: s, reasons, highlightPlanetIds: Array.from(matchedPlanetIds) });
+        entries.push({ galaxyId: g.id, system: s, reasons, highlightPlanetIds: Array.from(matchedPlanetIds), meta: entryMeta });
       }
     }
   });
@@ -235,6 +296,12 @@ function sortEntries(a, b) {
   const galCompare = galA.localeCompare(galB);
   if (galCompare !== 0) return galCompare;
 
+  if (STATE.activeResourceRateFilter) {
+    const scoreA = a.meta && a.meta.resourceRates ? a.meta.resourceRates.score : -Infinity;
+    const scoreB = b.meta && b.meta.resourceRates ? b.meta.resourceRates.score : -Infinity;
+    if (scoreA !== scoreB) return scoreB - scoreA;
+  }
+
   // 3. If galaxies are the same, sort by system name
   return (a.system.name || a.system.id).localeCompare(b.system.name || b.system.id);
 }
@@ -252,6 +319,9 @@ function updateFilterActiveStates() {
       { id: 'plName', type: 'text' },
       { id: 'plLvlMin', type: 'text' },
       { id: 'plLvlMax', type: 'text' },
+    ],
+    resourceRates: [
+      { id: 'resourceRateBox', type: 'any_check' },
     ],
     races: [
       { id: 'raceBox', type: 'any_check' },
@@ -313,6 +383,7 @@ export function clearSearch() {
   document.querySelectorAll('#raceBox input[type="checkbox"]').forEach(el => el.checked = false);
   document.querySelectorAll('#terrainBox input[type="checkbox"]').forEach(el => el.checked = false);
   document.querySelectorAll('#resBox input[type="checkbox"]').forEach(el => el.checked = false);
+  document.querySelectorAll('#resourceRateBox input[type="checkbox"]').forEach(el => el.checked = false);
   document.getElementById('splitA').value = 33;
   document.getElementById('splitB').value = 66;
   document.getElementById('ratioSim').value = 0;
@@ -322,6 +393,7 @@ export function clearSearch() {
   clearHighlight();
   updateHash({ system: '' });
   STATE.lastSearchResults = null;
+  STATE.activeResourceRateFilter = null;
   localStorage.removeItem(FILTERS_STORAGE_KEY);
   updateFilterActiveStates(); // Reset dots
 }
@@ -410,6 +482,7 @@ function runRouting() {
   resultEl.textContent = '';
   STATE.currentRoute = null;
   STATE.lastSearchResults = null;
+  STATE.activeResourceRateFilter = null;
   clearHighlight();
 
   if (!startName || !endName) {

@@ -495,6 +495,102 @@ button.ghost:hover{
 .kv .k{color:var(--muted);opacity:.8}
 .kv .v{color:var(--fg);font-weight:500}
 
+
+.planetResourceBlock{
+  margin-top:10px;
+  padding-top:10px;
+  border-top:1px solid rgba(255,255,255,.08);
+}
+
+.planetResourceBlock__summary{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  cursor:pointer;
+  list-style:none;
+  user-select:none;
+  padding-bottom:6px;
+}
+
+.planetResourceBlock__summary:focus-visible{
+  outline:2px solid rgba(0,212,255,.6);
+  outline-offset:4px;
+  border-radius:8px;
+}
+
+.planetResourceBlock__summary::-webkit-details-marker,
+.planetResourceBlock__summary::marker{
+  display:none;
+}
+
+.planetResourceBlock__summary::after{
+  content:"";
+  flex:0 0 10px;
+  height:10px;
+  border-right:2px solid rgba(255,255,255,.4);
+  border-bottom:2px solid rgba(255,255,255,.4);
+  transform:rotate(45deg);
+  transition:transform .2s ease, border-color .2s ease;
+}
+
+.planetResourceBlock[open] .planetResourceBlock__summary::after{
+  transform:rotate(-135deg);
+  border-color:var(--accent);
+}
+
+.planetResourceBlock__summary:hover::after{
+  border-color:var(--accent);
+}
+
+.planetResourceBlock__summary:hover .planetResourceBlock__title{
+  color:var(--accent);
+}
+
+.planetResourceBlock[open] .planetResourceBlock__title{
+  color:var(--accent);
+}
+
+.planetResourceBlock__title{
+  font-size:12px;
+  letter-spacing:.02em;
+  text-transform:uppercase;
+  color:var(--muted);
+  flex:1;
+}
+
+.planetResourceBlock__grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(160px, 1fr));
+  gap:6px 16px;
+  margin-top:10px;
+}
+
+.planetResourceBlock__item{
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  font-size:12px;
+  line-height:1.4;
+}
+
+.planetResourceBlock__label{
+  color:var(--muted);
+  flex:1;
+}
+
+.planetResourceBlock__value{
+  color:var(--fg);
+  font-weight:600;
+  font-variant-numeric:tabular-nums;
+  text-align:right;
+  min-width:48px;
+}
+
+.planetResourceBlock__empty{
+  margin-top:8px;
+  font-size:12px;
+}
+
 /* Enhanced double slider */
 .double-slider{position:relative;padding:10px 0}
 
@@ -875,7 +971,8 @@ label:has(#ratioSim) input[type=range] {
 /* Ensure checkbox groups use a grid layout */
 #filters #raceBox,
 #filters #terrainBox,
-#filters #resBox {
+#filters #resBox,
+#filters #resourceRateBox {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 6px;
@@ -902,7 +999,7 @@ label:has(#ratioSim) input[type=range] {
   padding-bottom: 14px;
 }
 
-#filters .blk.active {
+#filters .blk.active { 
   background:linear-gradient(135deg, rgba(38,45,65,.9) 0%, rgba(25,30,45,.8) 100%);
   box-shadow: 0 0 25px rgba(0,212,255,.2);
 }
@@ -1000,6 +1097,59 @@ label:has(#ratioSim) input[type=range] {
   color: var(--accent);
   text-align: center;
   font-weight: 500;
+}
+
+.resourceRateSummaryWrap {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--panel);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  overflow-x: auto;
+}
+
+.resourceRateSummary__title {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.resourceRateSummary {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 320px;
+}
+
+.resourceRateSummary thead th,
+.resourceRateSummary tbody td {
+  padding: 6px 8px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.resourceRateSummary thead th {
+  color: var(--muted);
+  font-weight: 500;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.resourceRateSummary tbody td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.resourceRateSummary tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.resourceRateSummary__value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.resourceRateSummary tbody tr:hover {
+  background: rgba(0, 212, 255, 0.08);
 }
 
 .galaxy-result-header {

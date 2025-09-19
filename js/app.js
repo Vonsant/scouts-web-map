@@ -13,12 +13,56 @@ async function loadComponents() {
   document.getElementById('mapWrap').innerHTML = mapHTML;
 }
 
+function normalizeName(value) {
+  return typeof value === 'string' ? value.trim().toLowerCase() : '';
+}
+
+function buildResourceRateIndex(entries) {
+  const index = new Map();
+  if (!Array.isArray(entries)) return index;
+
+  entries.forEach(item => {
+    const planetKey = normalizeName(item && item.planet);
+    if (!planetKey || !Array.isArray(item.resources)) return;
+
+    const rates = {};
+    item.resources.forEach(resource => {
+      if (!resource || typeof resource.name !== 'string') return;
+      const value = Number(resource.avg_per_hour);
+      if (!Number.isFinite(value)) return;
+      rates[resource.name] = Math.round(value * 10) / 10;
+    });
+
+    if (Object.keys(rates).length > 0) {
+      index.set(planetKey, rates);
+    }
+  });
+
+  return index;
+}
+
+function attachResourceRates(data, rateIndex) {
+  if (!data || !Array.isArray(data.galaxies)) return;
+
+  data.galaxies.forEach(g => (g.systems || []).forEach(s => {
+    (s.planets || []).forEach(p => {
+      const key = normalizeName(p.name || p.id);
+      if (!key) return;
+      const rates = rateIndex.get(key);
+      if (rates) {
+        p.resourceGeneration = rates;
+      }
+    });
+  }));
+}
+
 function onDataLoaded(data) {
   STATE.data = data;
   STATE.galaxyIndex.clear();
   STATE.systemIndex.clear();
   let sysCount = 0, plCount = 0, stCount = 0, abCount = 0;
   const galaxyOptions = [];
+  const generatedResourceKeys = new Set();
 
   data.galaxies.forEach(g => {
     STATE.galaxyIndex.set(g.id, g);
@@ -47,6 +91,13 @@ function onDataLoaded(data) {
         (p.resources || []).forEach(r => res.push(String(r)));
       }
       if (p.race) races.push(String(p.race));
+      if (p.resourceGeneration) {
+        Object.entries(p.resourceGeneration).forEach(([key, value]) => {
+          if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+            generatedResourceKeys.add(key);
+          }
+        });
+      }
     });
     (s.stations || []).forEach(t => {
       if (t.type) stTypes.push(String(t.type));
@@ -56,6 +107,7 @@ function onDataLoaded(data) {
   STATE.dict.res = unique(res).sort((a, b) => a.localeCompare(b));
   STATE.dict.stTypes = unique(stTypes).sort((a, b) => a.localeCompare(b));
   STATE.dict.races = unique(races).sort((a, b) => a.localeCompare(b));
+  STATE.dict.resourceRates = Array.from(generatedResourceKeys).sort((a, b) => a.localeCompare(b));
 
   buildFiltersUI();
 
@@ -91,10 +143,22 @@ function onDataLoaded(data) {
 
 async function loadData() {
   try {
-    const res = await fetch('data.json', { cache: 'no-store' });
-    if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-    const data = await res.json();
+    const [dataResponse, ratesResponse] = await Promise.all([
+      fetch('data.json', { cache: 'no-store' }),
+      fetch('planet_resource_generation_rates.json', { cache: 'no-store' })
+    ]);
+
+    if (!dataResponse.ok) throw new Error(`HTTP ${dataResponse.status}: ${dataResponse.statusText}`);
+    if (!ratesResponse.ok) throw new Error(`HTTP ${ratesResponse.status}: ${ratesResponse.statusText}`);
+
+    const [data, rateEntries] = await Promise.all([
+      dataResponse.json(),
+      ratesResponse.json()
+    ]);
+
     if (!data || !Array.isArray(data.galaxies)) throw new Error('Неверный формат данных: отсутствует массив galaxies');
+    const rateIndex = buildResourceRateIndex(rateEntries);
+    attachResourceRates(data, rateIndex);
     onDataLoaded(data);
   } catch (err) {
     console.error('Ошибка загрузки данных карты:', err);
