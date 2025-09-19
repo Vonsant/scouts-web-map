@@ -3,6 +3,205 @@ import { showGalaxy, highlightSystem } from './map.js';
 import { updateHash } from './app.js';
 import { fmtInt } from './utils.js';
 import * as i18n from './localization.js';
+import { calculateDistance } from './pathfinder.js';
+
+const EMPTY_VALUE = '—';
+
+const createElement = (tag, className, textContent) => {
+  const el = document.createElement(tag);
+  if (className) el.className = className;
+  if (textContent !== undefined && textContent !== null) {
+    el.textContent = textContent;
+  }
+  return el;
+};
+
+const appendKeyValue = (container, label, value) => {
+  const kEl = createElement('div', 'k', label);
+  const safeValue = (value === undefined || value === null || value === '') ? EMPTY_VALUE : value;
+  const vEl = createElement('div', 'v', safeValue);
+  container.appendChild(kEl);
+  container.appendChild(vEl);
+};
+
+const createKeyValueGrid = pairs => {
+  const grid = createElement('div', 'kv');
+  pairs.forEach(([label, value]) => appendKeyValue(grid, label, value));
+  return grid;
+};
+
+const createSectionBlock = title => {
+  const block = createElement('div', 'blk');
+  const header = createElement('div', 'hdrline');
+  header.appendChild(createElement('h3', null, title));
+  block.appendChild(header);
+  return block;
+};
+
+const createChipRow = (items, labelResolver) => {
+  if (!items || !items.length) return null;
+  const row = createElement('div', 'tagRow');
+  row.style.marginTop = '6px';
+  items.forEach(item => {
+    const chip = createElement('span', 'chip', labelResolver ? labelResolver(item) : item);
+    row.appendChild(chip);
+  });
+  return row;
+};
+
+const resolveResourceOrder = (() => {
+  let order = null;
+  return () => {
+    if (!order) {
+      order = new Map();
+      Object.keys(i18n.resources || {}).forEach((key, index) => {
+        order.set(key, index);
+      });
+    }
+    return order;
+  };
+})();
+
+const translateResource = key => i18n.translate(i18n.resources, key) || key;
+
+const buildResourceGenerationBlock = (resourceGeneration, shouldExpand) => {
+  if (!resourceGeneration || typeof resourceGeneration !== 'object') return null;
+
+  const entries = Object.entries(resourceGeneration)
+    .filter(([, rate]) => typeof rate === 'number' && Number.isFinite(rate) && rate > 0);
+
+  const block = createElement('details', 'planetResourceBlock');
+  if (shouldExpand) block.open = true;
+
+  const summary = createElement('summary', 'planetResourceBlock__summary');
+  summary.appendChild(createElement('span', 'planetResourceBlock__title', 'Генерация ресурсов (в час)'));
+  block.appendChild(summary);
+
+  if (!entries.length) {
+    const empty = createElement('div', 'planetResourceBlock__empty muted', 'Нет генерации ресурсов');
+    block.appendChild(empty);
+    return block;
+  }
+
+  const order = resolveResourceOrder();
+  entries.sort(([keyA], [keyB]) => {
+    const orderA = order.has(keyA) ? order.get(keyA) : Number.POSITIVE_INFINITY;
+    const orderB = order.has(keyB) ? order.get(keyB) : Number.POSITIVE_INFINITY;
+    if (orderA !== orderB) return orderA - orderB;
+    return keyA.localeCompare(keyB);
+  });
+
+  const grid = createElement('div', 'planetResourceBlock__grid');
+  entries.forEach(([key, rate]) => {
+    const item = createElement('div', 'planetResourceBlock__item');
+    item.appendChild(createElement('span', 'planetResourceBlock__label', translateResource(key)));
+    item.appendChild(createElement('span', 'planetResourceBlock__value', rate.toFixed(1)));
+    grid.appendChild(item);
+  });
+  block.appendChild(grid);
+  return block;
+};
+
+const buildPlanetCard = (planet, highlightSet) => {
+  const card = createElement('div', 'planetCard');
+  if (highlightSet.has(planet.id)) card.classList.add('match');
+
+  const header = createElement('div', 'hdr');
+  header.appendChild(createElement('div', 'name', planet.name || planet.id || 'Планета'));
+  const categoryLabel = planet.category === 'habitable'
+    ? 'Обитаема'
+    : (planet.category === 'inhabitable' ? 'Необитаема' : (planet.category || ''));
+  header.appendChild(createElement('div', 'small muted', categoryLabel));
+  card.appendChild(header);
+
+  if (planet.category === 'habitable') {
+    const grid = createKeyValueGrid([
+      ['Уровень', Number.isFinite(planet.level) ? planet.level : EMPTY_VALUE],
+      ['Раса', i18n.translate(i18n.races, planet.race) || EMPTY_VALUE],
+      ['Экономика', i18n.translate(i18n.economics, planet.economics) || EMPTY_VALUE],
+      ['Политика', i18n.translate(i18n.politics, planet.politics) || EMPTY_VALUE],
+      ['Население', (planet.population != null ? fmtInt(planet.population) : EMPTY_VALUE)]
+    ]);
+    card.appendChild(grid);
+  } else {
+    const grid = createKeyValueGrid([
+      ['Рельеф', i18n.translate(i18n.terrains, planet.terrain) || EMPTY_VALUE],
+      ['Горы', planet.hills || EMPTY_VALUE],
+      ['Океаны', planet.oceans || EMPTY_VALUE],
+      ['Равнины', planet.plains || EMPTY_VALUE]
+    ]);
+    card.appendChild(grid);
+  }
+
+  const resourcesRow = createChipRow(planet.resources, translateResource);
+  if (resourcesRow) card.appendChild(resourcesRow);
+
+  const resourceBlock = buildResourceGenerationBlock(planet.resourceGeneration, highlightSet.has(planet.id));
+  if (resourceBlock) card.appendChild(resourceBlock);
+
+  return card;
+};
+
+const buildStationCard = station => {
+  const card = createElement('div', 'stationCard');
+  const header = createElement('div', 'hdr');
+  header.appendChild(createElement('div', 'name', station.name || station.id || 'Станция'));
+  header.appendChild(createElement('div', 'small muted', i18n.translate(i18n.stationTypes, station.type) || EMPTY_VALUE));
+  card.appendChild(header);
+
+  const grid = createKeyValueGrid([
+    ['Уровень', Number.isFinite(station.level) ? station.level : EMPTY_VALUE],
+    ['Раса', i18n.translate(i18n.races, station.race) || EMPTY_VALUE]
+  ]);
+  card.appendChild(grid);
+  return card;
+};
+
+const buildAsteroidCard = belt => {
+  const card = createElement('div', 'beltCard');
+  const header = createElement('div', 'hdr');
+  header.appendChild(createElement('div', 'name', 'Астероидный пояс'));
+  card.appendChild(header);
+
+  const resourcesRow = createChipRow(belt.resources, translateResource);
+  if (resourcesRow) card.appendChild(resourcesRow);
+  return card;
+};
+
+const createResourceRateSummary = meta => {
+  if (!meta || !meta.matches || !meta.matches.length) return null;
+
+  const wrap = createElement('div', 'resourceRateSummaryWrap');
+  const selectedLabels = (meta.selected || []).map(r => r.label).join(', ');
+  wrap.appendChild(createElement('span', 'resourceRateSummary__title muted', `Подходящие планеты (${selectedLabels})`));
+
+  const table = createElement('table', 'resourceRateSummary');
+  const thead = document.createElement('thead');
+  const headRow = document.createElement('tr');
+  headRow.appendChild(createElement('th', null, 'Планета'));
+  (meta.selected || []).forEach(sel => {
+    headRow.appendChild(createElement('th', null, sel.label));
+  });
+  headRow.appendChild(createElement('th', null, 'Всего'));
+  thead.appendChild(headRow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  meta.matches.forEach(match => {
+    const row = document.createElement('tr');
+    row.appendChild(createElement('td', null, match.planetName));
+    (meta.selected || []).forEach(sel => {
+      const value = match.values[sel.key];
+      const valueCell = createElement('td', 'resourceRateSummary__value', (typeof value === 'number' && Number.isFinite(value)) ? value.toFixed(1) : '0.0');
+      row.appendChild(valueCell);
+    });
+    row.appendChild(createElement('td', 'resourceRateSummary__value', match.sum.toFixed(1)));
+    tbody.appendChild(row);
+  });
+  table.appendChild(tbody);
+  wrap.appendChild(table);
+  return wrap;
+};
 
 export function selectSystem(systemId, highlightPlanetIds) {
   const ref = STATE.systemIndex.get(systemId);
@@ -42,365 +241,127 @@ function getPlanetName(s, id) {
 
 export function renderSystemDetails(s, highlightPlanetIds) {
   const wrap = d3.select('#details');
-  wrap.html('');
-
-  const backBtn = document.createElement('button');
-  backBtn.className = 'ghost';
-  backBtn.style.marginBottom = '12px';
-  backBtn.textContent = '‹ Назад к результатам';
-  backBtn.onclick = () => document.getElementById('runSearch').click();
-  wrap.node().appendChild(backBtn);
-
-  // System Header (Color and Type removed)
-  const head = document.createElement('div');
-  head.className = 'card';
-  head.innerHTML = `<div class="sysTitle">${s.name || s.id}</div>`;
-  wrap.node().appendChild(head);
-
-  // System Info Block
-  const blkInfo = document.createElement('div');
-  blkInfo.className = 'blk';
-  blkInfo.innerHTML = `<div class="hdrline"><h3>Система</h3></div>`;
-  const kv = document.createElement('div');
-  kv.className = 'kv';
-  [
-    ['Координаты X', s.x], ['Координаты Y', s.y], ['Координаты Z', s.z],
-    ['Размер', s.size], ['Планеты', (s.planets || []).length],
-    ['Станции', (s.stations || []).length], ['Пояса', (s.asteroidBelts || []).length]
-  ].forEach(([k, v]) => {
-    const kEl = document.createElement('div'); kEl.className = 'k'; kEl.textContent = k;
-    const vEl = document.createElement('div'); vEl.className = 'v'; vEl.textContent = (v ?? '—');
-    kv.appendChild(kEl); kv.appendChild(vEl);
-  });
-  blkInfo.appendChild(kv);
-  wrap.node().appendChild(blkInfo);
+  const container = wrap.node();
+  container.innerHTML = '';
 
   const highlightSet = new Set(highlightPlanetIds || []);
+  const fragment = document.createDocumentFragment();
 
-  // Planets
-  if (s.planets && s.planets.length > 0) {
-    const blkPl = document.createElement('div');
-    blkPl.className = 'blk';
-    blkPl.innerHTML = `<div class="hdrline"><h3>Планеты</h3></div>`;
-    const plGrid = document.createElement('div');
-    plGrid.className = 'grid';
-    plGrid.style.gap = '8px';
-    s.planets.forEach(p => {
-        const card = document.createElement('div');
-        card.className = 'planetCard';
-        if (highlightSet.has(p.id)) card.classList.add('match');
-        const hdr = document.createElement('div');
-        hdr.className = 'hdr';
-        const left = document.createElement('div');
-        left.className = 'name';
-        left.textContent = p.name || p.id || 'Планета';
-        const right = document.createElement('div');
-        right.className = 'small muted';
-        right.textContent = (p.category === 'habitable' ? 'Обитаема' : (p.category === 'inhabitable' ? 'Необитаема' : (p.category || '')));
-        hdr.appendChild(left); hdr.appendChild(right);
-        card.appendChild(hdr);
-        const kvp = document.createElement('div');
-        kvp.className = 'kv';
-        if (p.category === 'habitable') {
-            [
-                ['Уровень', Number.isFinite(p.level) ? p.level : '—'],
-                ['Раса', i18n.translate(i18n.races, p.race) || '—'],
-                ['Экономика', i18n.translate(i18n.economics, p.economics) || '—'],
-                ['Политика', i18n.translate(i18n.politics, p.politics) || '—'],
-                ['Население', (p.population != null ? fmtInt(p.population) : '—')]
-            ].forEach(([k, v]) => {
-                const kEl = document.createElement('div'); kEl.className = 'k'; kEl.textContent = k;
-                const vEl = document.createElement('div'); vEl.className = 'v'; vEl.textContent = v;
-                kvp.appendChild(kEl); kvp.appendChild(vEl);
-            });
-            card.appendChild(kvp);
-        } else {
-            [
-                ['Рельеф', i18n.translate(i18n.terrains, p.terrain) || '—'],
-                ['Горы', p.hills || '—'], ['Океаны', p.oceans || '—'], ['Равнины', p.plains || '—']
-            ].forEach(([k, v]) => {
-                const kEl = document.createElement('div'); kEl.className = 'k'; kEl.textContent = k;
-                const vEl = document.createElement('div'); vEl.className = 'v'; vEl.textContent = v;
-                kvp.appendChild(kEl); kvp.appendChild(vEl);
-            });
-            card.appendChild(kvp);
-        }
-        if (p.resources && p.resources.length) {
-            const tags = document.createElement('div');
-            tags.className = 'tagRow';
-            tags.style.marginTop = '6px';
-            p.resources.forEach(r => {
-                const chip = document.createElement('span'); chip.className = 'chip';
-                chip.textContent = i18n.translate(i18n.resources, r);
-                tags.appendChild(chip);
-            });
-            card.appendChild(tags);
-        }
-        if (p.resourceGeneration && Object.keys(p.resourceGeneration).length) {
-            const resBlock = document.createElement('details');
-            resBlock.className = 'planetResourceBlock';
+  const backBtn = createElement('button', 'ghost', '‹ Назад к результатам');
+  backBtn.style.marginBottom = '12px';
+  backBtn.onclick = () => document.getElementById('runSearch').click();
+  fragment.appendChild(backBtn);
 
-            const summary = document.createElement('summary');
-            summary.className = 'planetResourceBlock__summary';
+  const headerCard = createElement('div', 'card');
+  headerCard.appendChild(createElement('div', 'sysTitle', s.name || s.id));
+  fragment.appendChild(headerCard);
 
-            const resTitle = document.createElement('span');
-            resTitle.className = 'planetResourceBlock__title';
-            resTitle.textContent = 'Генерация ресурсов (в час)';
-            summary.appendChild(resTitle);
+  const systemBlock = createSectionBlock('Система');
+  systemBlock.appendChild(createKeyValueGrid([
+    ['Координаты X', s.x ?? EMPTY_VALUE],
+    ['Координаты Y', s.y ?? EMPTY_VALUE],
+    ['Координаты Z', s.z ?? EMPTY_VALUE],
+    ['Размер', s.size ?? EMPTY_VALUE],
+    ['Планеты', (s.planets || []).length],
+    ['Станции', (s.stations || []).length],
+    ['Пояса', (s.asteroidBelts || []).length]
+  ]));
+  fragment.appendChild(systemBlock);
 
-            resBlock.appendChild(summary);
-
-            if (highlightSet.has(p.id)) {
-                resBlock.open = true;
-            }
-
-            const resourceEntries = Object.entries(p.resourceGeneration)
-                .filter(([, rate]) => typeof rate === 'number' && Number.isFinite(rate) && rate > 0);
-
-            if (resourceEntries.length) {
-                const resourceOrder = new Map();
-                Object.keys(i18n.resources || {}).forEach((key, index) => {
-                    resourceOrder.set(key, index);
-                });
-
-                resourceEntries.sort(([keyA], [keyB]) => {
-                    const orderA = resourceOrder.has(keyA) ? resourceOrder.get(keyA) : Number.POSITIVE_INFINITY;
-                    const orderB = resourceOrder.has(keyB) ? resourceOrder.get(keyB) : Number.POSITIVE_INFINITY;
-                    if (orderA !== orderB) return orderA - orderB;
-                    return keyA.localeCompare(keyB);
-                });
-
-                const grid = document.createElement('div');
-                grid.className = 'planetResourceBlock__grid';
-
-                resourceEntries.forEach(([key, rate]) => {
-                    const item = document.createElement('div');
-                    item.className = 'planetResourceBlock__item';
-
-                    const label = document.createElement('span');
-                    label.className = 'planetResourceBlock__label';
-                    label.textContent = i18n.translate(i18n.resources, key);
-
-                    const value = document.createElement('span');
-                    value.className = 'planetResourceBlock__value';
-                    value.textContent = rate.toFixed(1);
-
-                    item.appendChild(label);
-                    item.appendChild(value);
-                    grid.appendChild(item);
-                });
-
-                resBlock.appendChild(grid);
-            } else {
-                const empty = document.createElement('div');
-                empty.className = 'planetResourceBlock__empty muted';
-                empty.textContent = 'Нет генерации ресурсов';
-                resBlock.appendChild(empty);
-            }
-            card.appendChild(resBlock);
-        }
-        plGrid.appendChild(card);
+  if (Array.isArray(s.planets) && s.planets.length) {
+    const planetsBlock = createSectionBlock('Планеты');
+    const grid = createElement('div', 'grid');
+    grid.style.gap = '8px';
+    s.planets.forEach(planet => {
+      grid.appendChild(buildPlanetCard(planet, highlightSet));
     });
-    blkPl.appendChild(plGrid);
-    wrap.node().appendChild(blkPl);
+    planetsBlock.appendChild(grid);
+    fragment.appendChild(planetsBlock);
   }
 
-  // Stations (Refactored)
-  if (s.stations && s.stations.length > 0) {
-    const blkSt = document.createElement('div');
-    blkSt.className = 'blk';
-    blkSt.innerHTML = `<div class="hdrline"><h3>Станции</h3></div>`;
-    const stGrid = document.createElement('div');
-    stGrid.className = 'grid';
-    stGrid.style.gap = '8px';
-    s.stations.forEach(t => {
-        const card = document.createElement('div');
-        card.className = 'stationCard';
-        const hdr = document.createElement('div');
-        hdr.className = 'hdr';
-        const name = document.createElement('div');
-        name.className = 'name';
-        name.textContent = t.name || t.id || 'Станция';
-        const type = document.createElement('div');
-        type.className = 'small muted';
-        type.textContent = i18n.translate(i18n.stationTypes, t.type);
-        hdr.appendChild(name);
-        hdr.appendChild(type);
-        card.appendChild(hdr);
-
-        const kvp = document.createElement('div');
-        kvp.className = 'kv';
-        [
-            ['Уровень', Number.isFinite(t.level) ? t.level : '—'],
-            ['Раса', i18n.translate(i18n.races, t.race) || '—']
-        ].forEach(([k, v]) => {
-            const kEl = document.createElement('div'); kEl.className = 'k'; kEl.textContent = k;
-            const vEl = document.createElement('div'); vEl.className = 'v'; vEl.textContent = v;
-            kvp.appendChild(kEl); kvp.appendChild(vEl);
-        });
-        card.appendChild(kvp);
-        stGrid.appendChild(card);
+  if (Array.isArray(s.stations) && s.stations.length) {
+    const stationsBlock = createSectionBlock('Станции');
+    const grid = createElement('div', 'grid');
+    grid.style.gap = '8px';
+    s.stations.forEach(station => {
+      grid.appendChild(buildStationCard(station));
     });
-    blkSt.appendChild(stGrid);
-    wrap.node().appendChild(blkSt);
+    stationsBlock.appendChild(grid);
+    fragment.appendChild(stationsBlock);
   }
 
-  // Asteroid Belts (Refactored)
-  if (s.asteroidBelts && s.asteroidBelts.length > 0) {
-    const blkAb = document.createElement('div');
-    blkAb.className = 'blk';
-    blkAb.innerHTML = `<div class="hdrline"><h3>Астероидные пояса</h3></div>`;
-    const abGrid = document.createElement('div');
-    abGrid.className = 'grid';
-    abGrid.style.gap = '8px';
-    s.asteroidBelts.forEach(b => {
-        const card = document.createElement('div');
-        card.className = 'beltCard';
-        const hdr = document.createElement('div');
-        hdr.className = 'hdr';
-        const name = document.createElement('div');
-        name.className = 'name';
-        name.textContent = 'Астероидный пояс';
-        hdr.appendChild(name);
-        card.appendChild(hdr);
-
-        if (b.resources && b.resources.length) {
-            const tags = document.createElement('div');
-            tags.className = 'tagRow';
-            tags.style.marginTop = '6px';
-            b.resources.forEach(r => {
-                const chip = document.createElement('span');
-                chip.className = 'chip';
-                chip.textContent = i18n.translate(i18n.resources, r);
-                tags.appendChild(chip);
-            });
-            card.appendChild(tags);
-        }
-        abGrid.appendChild(card);
+  if (Array.isArray(s.asteroidBelts) && s.asteroidBelts.length) {
+    const beltsBlock = createSectionBlock('Астероидные пояса');
+    const grid = createElement('div', 'grid');
+    grid.style.gap = '8px';
+    s.asteroidBelts.forEach(belt => {
+      grid.appendChild(buildAsteroidCard(belt));
     });
-    blkAb.appendChild(abGrid);
-    wrap.node().appendChild(blkAb);
+    beltsBlock.appendChild(grid);
+    fragment.appendChild(beltsBlock);
   }
 
-  if (highlightPlanetIds && highlightPlanetIds.length) {
-    const first = document.querySelector('.planetCard.match');
+  container.appendChild(fragment);
+
+  if (highlightSet.size) {
+    const first = container.querySelector('.planetCard.match');
     if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 }
 
 export function renderSummaryList(entries) {
   const wrap = d3.select('#details');
-  wrap.html('');
+  const container = wrap.node();
+  container.innerHTML = '';
 
-  if (entries.length === 0) {
-    renderDetailsEmpty(true); // true indicates this is a "no results" message
+  if (!entries.length) {
+    renderDetailsEmpty(true);
     return;
   }
 
-  const title = document.createElement('div');
-  title.className = 'small muted';
-  title.textContent = `Найдено систем: ${entries.length}`;
-  wrap.node().appendChild(title);
+  const fragment = document.createDocumentFragment();
+  fragment.appendChild(createElement('div', 'small muted', `Найдено систем: ${entries.length}`));
 
   let lastGalaxyId = null;
 
-  entries.forEach((entry, i) => {
-    const { galaxyId, system: s, reasons, highlightPlanetIds, meta } = entry;
+  entries.forEach((entry, index) => {
+    const { galaxyId, system: systemRef, reasons, highlightPlanetIds, meta } = entry;
     if (galaxyId !== lastGalaxyId) {
       const galaxy = STATE.galaxyIndex.get(galaxyId);
-      const galaxyHeader = document.createElement('h2');
-      galaxyHeader.className = 'galaxy-result-header result-card-enter';
-      galaxyHeader.style.animationDelay = `${i * 50}ms`;
-      galaxyHeader.textContent = galaxy ? (galaxy.name || galaxy.id) : 'Неизвестная галактика';
-      wrap.node().appendChild(galaxyHeader);
+      const galaxyHeader = createElement('h2', 'galaxy-result-header result-card-enter', galaxy ? (galaxy.name || galaxy.id) : 'Неизвестная галактика');
+      galaxyHeader.style.animationDelay = `${index * 50}ms`;
+      fragment.appendChild(galaxyHeader);
       lastGalaxyId = galaxyId;
     }
 
-    const card = document.createElement('div');
-    card.className = 'card result result-card-enter';
-    card.style.animationDelay = `${i * 50}ms`;
-    card.onclick = () => selectSystem(s.id, highlightPlanetIds || []);
-    const title = document.createElement('div');
-    title.className = 'sysTitle';
-    title.textContent = s.name || s.id;
-    card.appendChild(title);
-    const sub = document.createElement('div');
-    sub.className = 'sysSub';
-    sub.textContent = `Планет: ${(s.planets || []).length} • Станций: ${(s.stations || []).length} • Поясов: ${(s.asteroidBelts || []).length}`;
-    card.appendChild(sub);
+    const card = createElement('div', 'card result result-card-enter');
+    card.style.animationDelay = `${index * 50}ms`;
+    card.onclick = () => selectSystem(systemRef.id, highlightPlanetIds || []);
+
+    card.appendChild(createElement('div', 'sysTitle', systemRef.name || systemRef.id));
+    card.appendChild(createElement('div', 'sysSub', `Планет: ${(systemRef.planets || []).length} • Станций: ${(systemRef.stations || []).length} • Поясов: ${(systemRef.asteroidBelts || []).length}`));
+
     if (reasons && reasons.length) {
-      const why = document.createElement('div');
-      why.className = 'small muted';
-      why.textContent = reasons.join(' • ');
-      card.appendChild(why);
+      card.appendChild(createElement('div', 'small muted', reasons.join(' • ')));
     }
-    const resourceMeta = meta && meta.resourceRates;
-    if (resourceMeta && resourceMeta.matches && resourceMeta.matches.length) {
-      const wrap = document.createElement('div');
-      wrap.className = 'resourceRateSummaryWrap';
 
-      const titleEl = document.createElement('span');
-      titleEl.className = 'resourceRateSummary__title muted';
-      const selectedLabels = resourceMeta.selected.map(r => r.label).join(', ');
-      titleEl.textContent = `Подходящие планеты (${selectedLabels})`;
-      wrap.appendChild(titleEl);
-
-      const table = document.createElement('table');
-      table.className = 'resourceRateSummary';
-
-      const thead = document.createElement('thead');
-      const headRow = document.createElement('tr');
-      const planetHead = document.createElement('th');
-      planetHead.textContent = 'Планета';
-      headRow.appendChild(planetHead);
-      resourceMeta.selected.forEach(sel => {
-        const th = document.createElement('th');
-        th.textContent = sel.label;
-        headRow.appendChild(th);
-      });
-      const totalHead = document.createElement('th');
-      totalHead.textContent = 'Всего';
-      headRow.appendChild(totalHead);
-      thead.appendChild(headRow);
-      table.appendChild(thead);
-
-      const tbody = document.createElement('tbody');
-      resourceMeta.matches.forEach(match => {
-        const row = document.createElement('tr');
-        const planetCell = document.createElement('td');
-        planetCell.textContent = match.planetName;
-        row.appendChild(planetCell);
-        resourceMeta.selected.forEach(sel => {
-          const valueCell = document.createElement('td');
-          valueCell.className = 'resourceRateSummary__value';
-          const val = match.values[sel.key];
-          valueCell.textContent = (typeof val === 'number' && Number.isFinite(val)) ? val.toFixed(1) : '0.0';
-          row.appendChild(valueCell);
-        });
-        const totalCell = document.createElement('td');
-        totalCell.className = 'resourceRateSummary__value';
-        totalCell.textContent = match.sum.toFixed(1);
-        row.appendChild(totalCell);
-        tbody.appendChild(row);
-      });
-      table.appendChild(tbody);
-      wrap.appendChild(table);
-      card.appendChild(wrap);
+    const resourceSummary = createResourceRateSummary(meta && meta.resourceRates);
+    if (resourceSummary) {
+      card.appendChild(resourceSummary);
     }
+
     if (highlightPlanetIds && highlightPlanetIds.length) {
-      const chips = document.createElement('div');
-      chips.className = 'chipsRow';
-      const names = highlightPlanetIds.map(pid => getPlanetName(s, pid));
-      names.forEach(n => {
-        const chip = document.createElement('span');
-        chip.className = 'chip';
-        chip.textContent = n;
-        chips.appendChild(chip);
+      const chips = createElement('div', 'chipsRow');
+      highlightPlanetIds.map(pid => getPlanetName(systemRef, pid)).forEach(name => {
+        chips.appendChild(createElement('span', 'chip', name));
       });
       card.appendChild(chips);
     }
-    wrap.node().appendChild(card);
+
+    fragment.appendChild(card);
   });
+
+  container.appendChild(fragment);
 }
 
 export function buildFiltersUI() {
@@ -445,50 +406,91 @@ export function buildFiltersUI() {
 
 export function renderRouteDetails(route) {
   const wrap = d3.select('#details');
-  wrap.html('');
+  const container = wrap.node();
+  container.innerHTML = '';
 
-  const title = document.createElement('h3');
-  title.textContent = 'Проложенный маршрут';
+  if (!route || !Array.isArray(route.path1) || !route.path1.length) {
+    renderDetailsEmpty();
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+
+  const title = createElement('h3', null, 'Проложенный маршрут');
   title.style.margin = '0 0 12px 0';
-  wrap.node().appendChild(title);
+  fragment.appendChild(title);
 
-  const renderPath = (path, startIdx) => {
-    path.forEach((s, i) => {
-      const card = document.createElement('div');
-      card.className = 'card result';
-      card.onclick = () => selectSystem(s.id, []);
+  const jumpCount = (() => {
+    const path1Jumps = Math.max(0, (route.path1 ? route.path1.length : 1) - 1);
+    const path2Jumps = Math.max(0, (route.path2 ? route.path2.length : 1) - 1);
+    return path1Jumps + path2Jumps + (route.isCrossGalaxy ? 1 : 0);
+  })();
 
-      const content = document.createElement('div');
+  if (route.distance != null || jumpCount > 0) {
+    const meta = createElement('div', 'small muted', `Всего прыжков: ${jumpCount} • Дистанция: ${route.distance ?? 0} пк`);
+    meta.style.marginBottom = '12px';
+    fragment.appendChild(meta);
+  }
+
+  let stepIndex = 1;
+  let previousSystem = null;
+
+  const appendPath = path => {
+    if (!Array.isArray(path) || !path.length) return;
+    path.forEach(system => {
+      const card = createElement('div', 'card result');
+      card.onclick = () => selectSystem(system.id, []);
+
+      const content = createElement('div');
       content.style.display = 'flex';
-      content.style.alignItems = 'center';
-      content.style.gap = '12px';
+      content.style.flexDirection = 'column';
+      content.style.gap = '6px';
 
-      const stepNum = document.createElement('div');
-      stepNum.textContent = `${startIdx + i}.`;
-      stepNum.style.fontWeight = 'bold';
-      stepNum.style.color = 'var(--accent)';
+      const header = createElement('div');
+      header.style.display = 'flex';
+      header.style.alignItems = 'center';
+      header.style.gap = '12px';
 
-      const sysName = document.createElement('div');
-      sysName.textContent = s.name || s.id;
+      const stepLabel = createElement('div', null, `${stepIndex}.`);
+      stepLabel.style.fontWeight = 'bold';
+      stepLabel.style.color = 'var(--accent)';
+      header.appendChild(stepLabel);
 
-      content.appendChild(stepNum);
-      content.appendChild(sysName);
+      const nameEl = createElement('div', null, system.name || system.id);
+      nameEl.style.flex = '1';
+      header.appendChild(nameEl);
+
+      content.appendChild(header);
+
+      if (previousSystem && previousSystem !== system) {
+        const distance = calculateDistance(previousSystem, system);
+        const distanceEl = createElement('div', 'small muted', `Переход: ${distance} пк`);
+        content.appendChild(distanceEl);
+      }
+
       card.appendChild(content);
-      wrap.node().appendChild(card);
+      fragment.appendChild(card);
+
+      previousSystem = system;
+      stepIndex += 1;
     });
   };
 
-  renderPath(route.path1, 1);
+  appendPath(route.path1);
 
   if (route.isCrossGalaxy) {
-    const separator = document.createElement('div');
+    const separator = createElement('div', null, '--- Межгалактический прыжок ---');
     separator.style.textAlign = 'center';
     separator.style.margin = '10px 0';
     separator.style.color = 'var(--accent-2)';
-    separator.innerHTML = `--- Межгалактический прыжок ---`;
-    wrap.node().appendChild(separator);
-    renderPath(route.path2, route.path1.length);
+    fragment.appendChild(separator);
+    previousSystem = null;
+    appendPath(route.path2);
+  } else if (Array.isArray(route.path2) && route.path2.length) {
+    appendPath(route.path2);
   }
+
+  container.appendChild(fragment);
 }
 
 export function buildSystemDatalist() {
