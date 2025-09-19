@@ -515,21 +515,26 @@ export function buildSystemDatalist() {
 export function handleAccordion(clickedHeader) {
   const allBlk = document.querySelectorAll('#filters-inner > .blk');
   const routeBlk = document.getElementById('filter-block-route');
-  const isRouteHeader = clickedHeader.parentElement === routeBlk;
+  const resourceBlk = document.getElementById('filter-block-resource-rates');
+  const parentBlk = clickedHeader.parentElement;
+  const isRouteHeader = parentBlk === routeBlk;
+  const isResourceHeader = parentBlk === resourceBlk;
 
-  if (isRouteHeader) {
-    // If route planner is opened, close all others
-    if (routeBlk.classList.contains('active')) {
+  if (isRouteHeader || isResourceHeader) {
+    const activeBlk = isRouteHeader ? routeBlk : resourceBlk;
+    // If a special block is opened, close all others
+    if (activeBlk.classList.contains('active')) {
       allBlk.forEach(blk => {
-        if (blk.id !== 'filter-block-route') {
+        if (blk !== activeBlk) {
           blk.classList.remove('active');
         }
       });
     }
   } else {
-    // If any other filter is opened, close route planner
-    if (clickedHeader.parentElement.classList.contains('active')) {
+    // If any other filter is opened, close special blocks
+    if (parentBlk.classList.contains('active')) {
       routeBlk.classList.remove('active');
+      resourceBlk.classList.remove('active');
     }
   }
 }
