@@ -40,6 +40,14 @@ function getPlanetName(s, id) {
   return p ? (p.name || p.id) : id;
 }
 
+function formatResourceCount(count) {
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+  if (mod10 === 1 && mod100 !== 11) return `${count} ресурс`;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return `${count} ресурса`;
+  return `${count} ресурсов`;
+}
+
 export function renderSystemDetails(s, highlightPlanetIds) {
   const wrap = d3.select('#details');
   wrap.html('');
@@ -149,22 +157,12 @@ export function renderSystemDetails(s, highlightPlanetIds) {
             summary.appendChild(resTitle);
 
             const preview = document.createElement('span');
-            preview.className = 'planetResourceBlock__preview';
+            preview.className = 'planetResourceBlock__meta';
             const nonZeroResources = Object.entries(p.resourceGeneration)
                 .filter(([, rate]) => typeof rate === 'number' && Number.isFinite(rate) && rate > 0)
                 .sort(([, a], [, b]) => b - a);
             if (nonZeroResources.length) {
-                const previewText = nonZeroResources
-                    .slice(0, 3)
-                    .map(([key, rate]) => `${i18n.translate(i18n.resources, key)} ${rate.toFixed(1)}`)
-                    .join(' · ');
-                preview.appendChild(document.createTextNode(previewText));
-                if (nonZeroResources.length > 3) {
-                    const more = document.createElement('span');
-                    more.className = 'planetResourceBlock__previewMore';
-                    more.textContent = ` +${nonZeroResources.length - 3}`;
-                    preview.appendChild(more);
-                }
+                preview.textContent = formatResourceCount(nonZeroResources.length);
             } else {
                 preview.textContent = 'Нет генерации';
                 preview.classList.add('muted');

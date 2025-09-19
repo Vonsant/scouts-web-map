@@ -550,11 +550,6 @@ button.ghost:hover{
   color:var(--accent);
 }
 
-.planetResourceBlock[open] .planetResourceBlock__preview{
-  color:var(--muted);
-  opacity:1;
-}
-
 .planetResourceBlock__title{
   font-size:12px;
   letter-spacing:.02em;
@@ -563,34 +558,27 @@ button.ghost:hover{
   flex:0 0 auto;
 }
 
-.planetResourceBlock__preview{
-  flex:1;
-  font-size:12px;
-  color:var(--fg);
-  opacity:.85;
-  text-transform:none;
-  letter-spacing:0;
-  text-align:right;
-  line-height:1.4;
-}
-
-.planetResourceBlock__preview.muted{
-  color:var(--muted);
-  opacity:.8;
-}
-
-.planetResourceBlock__previewMore{
+.planetResourceBlock__meta{
+  margin-left:auto;
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  margin-left:8px;
-  padding:2px 6px;
+  padding:2px 10px;
   border-radius:999px;
   font-size:11px;
   font-weight:600;
   color:var(--accent);
   background:rgba(0,212,255,.12);
   border:1px solid rgba(0,212,255,.25);
+  text-transform:none;
+  letter-spacing:0;
+}
+
+.planetResourceBlock__meta.muted{
+  color:var(--muted);
+  border-color:rgba(255,255,255,.08);
+  background:rgba(255,255,255,.04);
+  font-weight:500;
 }
 
 .planetResourceBlock__grid{
