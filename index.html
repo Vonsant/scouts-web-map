@@ -4,18 +4,41 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Карта галактик — диаграмма Вороного</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
 <div id="app">
   <header>
-    <div class="left">
-      <h1>Карта галактик — диаграмма Вороного</h1>
-      <span class="pill"><strong id="galCount">—</strong> галактики</span>
-      <span class="pill"><strong id="sysCount">—</strong> систем</span>
-      <span class="pill"><strong id="plCount">—</strong> планет</span>
-      <span class="pill"><strong id="stCount">—</strong> станций</span>
-      <span class="pill"><strong id="abCount">—</strong> поясов</span>
+    <div class="header-main">
+      <div class="branding">
+        <h1>Карта галактик — диаграмма Вороного</h1>
+        <p class="subtitle">Интерактивное полотно вселенной scouts.su с фильтрами, маршрутами и подробной статистикой систем.</p>
+      </div>
+      <div class="stats" role="list">
+        <div class="stat" role="listitem">
+          <span id="galCount" class="stat__value">—</span>
+          <span class="stat__label">галактики</span>
+        </div>
+        <div class="stat" role="listitem">
+          <span id="sysCount" class="stat__value">—</span>
+          <span class="stat__label">систем</span>
+        </div>
+        <div class="stat" role="listitem">
+          <span id="plCount" class="stat__value">—</span>
+          <span class="stat__label">планет</span>
+        </div>
+        <div class="stat" role="listitem">
+          <span id="stCount" class="stat__value">—</span>
+          <span class="stat__label">станций</span>
+        </div>
+        <div class="stat" role="listitem">
+          <span id="abCount" class="stat__value">—</span>
+          <span class="stat__label">поясов</span>
+        </div>
+      </div>
     </div>
     <div class="header-right-controls">
       <div id="radio-player">
