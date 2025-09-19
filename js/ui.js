@@ -40,14 +40,6 @@ function getPlanetName(s, id) {
   return p ? (p.name || p.id) : id;
 }
 
-function formatResourceCount(count) {
-  const mod10 = count % 10;
-  const mod100 = count % 100;
-  if (mod10 === 1 && mod100 !== 11) return `${count} ресурс`;
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return `${count} ресурса`;
-  return `${count} ресурсов`;
-}
-
 export function renderSystemDetails(s, highlightPlanetIds) {
   const wrap = d3.select('#details');
   wrap.html('');
@@ -156,60 +148,55 @@ export function renderSystemDetails(s, highlightPlanetIds) {
             resTitle.textContent = 'Генерация ресурсов (в час)';
             summary.appendChild(resTitle);
 
-            const preview = document.createElement('span');
-            preview.className = 'planetResourceBlock__meta';
-            const nonZeroResources = Object.entries(p.resourceGeneration)
-                .filter(([, rate]) => typeof rate === 'number' && Number.isFinite(rate) && rate > 0)
-                .sort(([, a], [, b]) => b - a);
-            if (nonZeroResources.length) {
-                preview.textContent = formatResourceCount(nonZeroResources.length);
-            } else {
-                preview.textContent = 'Нет генерации';
-                preview.classList.add('muted');
-            }
-            summary.appendChild(preview);
-
             resBlock.appendChild(summary);
 
             if (highlightSet.has(p.id)) {
                 resBlock.open = true;
             }
 
-            const grid = document.createElement('div');
-            grid.className = 'planetResourceBlock__grid';
+            const resourceEntries = Object.entries(p.resourceGeneration)
+                .filter(([, rate]) => typeof rate === 'number' && Number.isFinite(rate) && rate > 0);
 
-            let keysToRender = Object.keys(i18n.resources || {});
-            if (keysToRender.length) {
-                const extras = Object.keys(p.resourceGeneration).filter(key => !keysToRender.includes(key)).sort((a, b) => a.localeCompare(b));
-                keysToRender = keysToRender.concat(extras);
-            } else {
-                keysToRender = Object.keys(p.resourceGeneration).sort((a, b) => a.localeCompare(b));
-            }
+            if (resourceEntries.length) {
+                const resourceOrder = new Map();
+                Object.keys(i18n.resources || {}).forEach((key, index) => {
+                    resourceOrder.set(key, index);
+                });
 
-            keysToRender.forEach(key => {
-                const item = document.createElement('div');
-                item.className = 'planetResourceBlock__item';
+                resourceEntries.sort(([keyA], [keyB]) => {
+                    const orderA = resourceOrder.has(keyA) ? resourceOrder.get(keyA) : Number.POSITIVE_INFINITY;
+                    const orderB = resourceOrder.has(keyB) ? resourceOrder.get(keyB) : Number.POSITIVE_INFINITY;
+                    if (orderA !== orderB) return orderA - orderB;
+                    return keyA.localeCompare(keyB);
+                });
 
-                const label = document.createElement('span');
-                label.className = 'planetResourceBlock__label';
-                label.textContent = i18n.translate(i18n.resources, key);
+                const grid = document.createElement('div');
+                grid.className = 'planetResourceBlock__grid';
 
-                const value = document.createElement('span');
-                value.className = 'planetResourceBlock__value';
-                const rate = p.resourceGeneration[key];
-                if (typeof rate === 'number' && Number.isFinite(rate)) {
+                resourceEntries.forEach(([key, rate]) => {
+                    const item = document.createElement('div');
+                    item.className = 'planetResourceBlock__item';
+
+                    const label = document.createElement('span');
+                    label.className = 'planetResourceBlock__label';
+                    label.textContent = i18n.translate(i18n.resources, key);
+
+                    const value = document.createElement('span');
+                    value.className = 'planetResourceBlock__value';
                     value.textContent = rate.toFixed(1);
-                } else {
-                    value.textContent = '—';
-                    value.classList.add('muted');
-                }
 
-                item.appendChild(label);
-                item.appendChild(value);
-                grid.appendChild(item);
-            });
+                    item.appendChild(label);
+                    item.appendChild(value);
+                    grid.appendChild(item);
+                });
 
-            resBlock.appendChild(grid);
+                resBlock.appendChild(grid);
+            } else {
+                const empty = document.createElement('div');
+                empty.className = 'planetResourceBlock__empty muted';
+                empty.textContent = 'Нет генерации ресурсов';
+                resBlock.appendChild(empty);
+            }
             card.appendChild(resBlock);
         }
         plGrid.appendChild(card);
