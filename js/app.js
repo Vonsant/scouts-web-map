@@ -62,6 +62,7 @@ function onDataLoaded(data) {
   STATE.systemIndex.clear();
   let sysCount = 0, plCount = 0, stCount = 0, abCount = 0;
   const galaxyOptions = [];
+  const generatedResourceKeys = new Set();
 
   data.galaxies.forEach(g => {
     STATE.galaxyIndex.set(g.id, g);
@@ -90,6 +91,13 @@ function onDataLoaded(data) {
         (p.resources || []).forEach(r => res.push(String(r)));
       }
       if (p.race) races.push(String(p.race));
+      if (p.resourceGeneration) {
+        Object.entries(p.resourceGeneration).forEach(([key, value]) => {
+          if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+            generatedResourceKeys.add(key);
+          }
+        });
+      }
     });
     (s.stations || []).forEach(t => {
       if (t.type) stTypes.push(String(t.type));
@@ -99,6 +107,7 @@ function onDataLoaded(data) {
   STATE.dict.res = unique(res).sort((a, b) => a.localeCompare(b));
   STATE.dict.stTypes = unique(stTypes).sort((a, b) => a.localeCompare(b));
   STATE.dict.races = unique(races).sort((a, b) => a.localeCompare(b));
+  STATE.dict.resourceRates = Array.from(generatedResourceKeys).sort((a, b) => a.localeCompare(b));
 
   buildFiltersUI();
 

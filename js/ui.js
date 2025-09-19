@@ -304,7 +304,8 @@ export function renderSummaryList(entries) {
 
   let lastGalaxyId = null;
 
-  entries.forEach(({ galaxyId, system: s, reasons, highlightPlanetIds }, i) => {
+  entries.forEach((entry, i) => {
+    const { galaxyId, system: s, reasons, highlightPlanetIds, meta } = entry;
     if (galaxyId !== lastGalaxyId) {
       const galaxy = STATE.galaxyIndex.get(galaxyId);
       const galaxyHeader = document.createElement('h2');
@@ -332,6 +333,59 @@ export function renderSummaryList(entries) {
       why.className = 'small muted';
       why.textContent = reasons.join(' • ');
       card.appendChild(why);
+    }
+    const resourceMeta = meta && meta.resourceRates;
+    if (resourceMeta && resourceMeta.matches && resourceMeta.matches.length) {
+      const wrap = document.createElement('div');
+      wrap.className = 'resourceRateSummaryWrap';
+
+      const titleEl = document.createElement('span');
+      titleEl.className = 'resourceRateSummary__title muted';
+      const selectedLabels = resourceMeta.selected.map(r => r.label).join(', ');
+      titleEl.textContent = `Подходящие планеты (${selectedLabels})`;
+      wrap.appendChild(titleEl);
+
+      const table = document.createElement('table');
+      table.className = 'resourceRateSummary';
+
+      const thead = document.createElement('thead');
+      const headRow = document.createElement('tr');
+      const planetHead = document.createElement('th');
+      planetHead.textContent = 'Планета';
+      headRow.appendChild(planetHead);
+      resourceMeta.selected.forEach(sel => {
+        const th = document.createElement('th');
+        th.textContent = sel.label;
+        headRow.appendChild(th);
+      });
+      const totalHead = document.createElement('th');
+      totalHead.textContent = 'Всего';
+      headRow.appendChild(totalHead);
+      thead.appendChild(headRow);
+      table.appendChild(thead);
+
+      const tbody = document.createElement('tbody');
+      resourceMeta.matches.forEach(match => {
+        const row = document.createElement('tr');
+        const planetCell = document.createElement('td');
+        planetCell.textContent = match.planetName;
+        row.appendChild(planetCell);
+        resourceMeta.selected.forEach(sel => {
+          const valueCell = document.createElement('td');
+          valueCell.className = 'resourceRateSummary__value';
+          const val = match.values[sel.key];
+          valueCell.textContent = (typeof val === 'number' && Number.isFinite(val)) ? val.toFixed(1) : '0.0';
+          row.appendChild(valueCell);
+        });
+        const totalCell = document.createElement('td');
+        totalCell.className = 'resourceRateSummary__value';
+        totalCell.textContent = match.sum.toFixed(1);
+        row.appendChild(totalCell);
+        tbody.appendChild(row);
+      });
+      table.appendChild(tbody);
+      wrap.appendChild(table);
+      card.appendChild(wrap);
     }
     if (highlightPlanetIds && highlightPlanetIds.length) {
       const chips = document.createElement('div');
@@ -368,6 +422,18 @@ export function buildFiltersUI() {
   resBox.selectAll('label.res').data(STATE.dict.res).join('label')
     .attr('class', 'res chip')
     .html(d => `<input type="checkbox" value="${d}"> ${i18n.translate(i18n.resources, d)}`);
+
+  const resourceRateBox = d3.select('#resourceRateBox');
+  if (!resourceRateBox.empty()) {
+    const rateOptions = (STATE.dict.resourceRates || []).slice().sort((a, b) => {
+      const labelA = i18n.translate(i18n.resources, a) || a;
+      const labelB = i18n.translate(i18n.resources, b) || b;
+      return labelA.localeCompare(labelB, 'ru');
+    });
+    resourceRateBox.selectAll('label.resource-rate').data(rateOptions).join('label')
+      .attr('class', 'resource-rate chip')
+      .html(d => `<input type="checkbox" value="${d}"> ${i18n.translate(i18n.resources, d) || d}`);
+  }
 
   const raceBox = d3.select('#raceBox');
   raceBox.selectAll('label.race').data(STATE.dict.races).join('label')

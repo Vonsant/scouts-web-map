@@ -971,7 +971,8 @@ label:has(#ratioSim) input[type=range] {
 /* Ensure checkbox groups use a grid layout */
 #filters #raceBox,
 #filters #terrainBox,
-#filters #resBox {
+#filters #resBox,
+#filters #resourceRateBox {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 6px;
@@ -998,7 +999,7 @@ label:has(#ratioSim) input[type=range] {
   padding-bottom: 14px;
 }
 
-#filters .blk.active {
+#filters .blk.active { 
   background:linear-gradient(135deg, rgba(38,45,65,.9) 0%, rgba(25,30,45,.8) 100%);
   box-shadow: 0 0 25px rgba(0,212,255,.2);
 }
@@ -1096,6 +1097,59 @@ label:has(#ratioSim) input[type=range] {
   color: var(--accent);
   text-align: center;
   font-weight: 500;
+}
+
+.resourceRateSummaryWrap {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--panel);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  overflow-x: auto;
+}
+
+.resourceRateSummary__title {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.resourceRateSummary {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 320px;
+}
+
+.resourceRateSummary thead th,
+.resourceRateSummary tbody td {
+  padding: 6px 8px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.resourceRateSummary thead th {
+  color: var(--muted);
+  font-weight: 500;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.resourceRateSummary tbody td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.resourceRateSummary tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.resourceRateSummary__value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.resourceRateSummary tbody tr:hover {
+  background: rgba(0, 212, 255, 0.08);
 }
 
 .galaxy-result-header {
