@@ -495,10 +495,64 @@ button.ghost:hover{
 .kv .k{color:var(--muted);opacity:.8}
 .kv .v{color:var(--fg);font-weight:500}
 
+
 .planetResourceBlock{
   margin-top:10px;
   padding-top:10px;
   border-top:1px solid rgba(255,255,255,.08);
+}
+
+.planetResourceBlock__summary{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  cursor:pointer;
+  list-style:none;
+  user-select:none;
+  padding-bottom:6px;
+}
+
+.planetResourceBlock__summary:focus-visible{
+  outline:2px solid rgba(0,212,255,.6);
+  outline-offset:4px;
+  border-radius:8px;
+}
+
+.planetResourceBlock__summary::-webkit-details-marker,
+.planetResourceBlock__summary::marker{
+  display:none;
+}
+
+.planetResourceBlock__summary::after{
+  content:"";
+  flex:0 0 10px;
+  height:10px;
+  border-right:2px solid rgba(255,255,255,.4);
+  border-bottom:2px solid rgba(255,255,255,.4);
+  transform:rotate(45deg);
+  transition:transform .2s ease, border-color .2s ease;
+}
+
+.planetResourceBlock[open] .planetResourceBlock__summary::after{
+  transform:rotate(-135deg);
+  border-color:var(--accent);
+}
+
+.planetResourceBlock__summary:hover::after{
+  border-color:var(--accent);
+}
+
+.planetResourceBlock__summary:hover .planetResourceBlock__title{
+  color:var(--accent);
+}
+
+.planetResourceBlock[open] .planetResourceBlock__title{
+  color:var(--accent);
+}
+
+.planetResourceBlock[open] .planetResourceBlock__preview{
+  color:var(--muted);
+  opacity:1;
 }
 
 .planetResourceBlock__title{
@@ -506,13 +560,44 @@ button.ghost:hover{
   letter-spacing:.02em;
   text-transform:uppercase;
   color:var(--muted);
-  margin-bottom:6px;
+  flex:0 0 auto;
+}
+
+.planetResourceBlock__preview{
+  flex:1;
+  font-size:12px;
+  color:var(--fg);
+  opacity:.85;
+  text-transform:none;
+  letter-spacing:0;
+  text-align:right;
+  line-height:1.4;
+}
+
+.planetResourceBlock__preview.muted{
+  color:var(--muted);
+  opacity:.8;
+}
+
+.planetResourceBlock__previewMore{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  margin-left:8px;
+  padding:2px 6px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:600;
+  color:var(--accent);
+  background:rgba(0,212,255,.12);
+  border:1px solid rgba(0,212,255,.25);
 }
 
 .planetResourceBlock__grid{
   display:grid;
   grid-template-columns:repeat(auto-fit, minmax(160px, 1fr));
   gap:6px 16px;
+  margin-top:10px;
 }
 
 .planetResourceBlock__item{

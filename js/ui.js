@@ -137,13 +137,45 @@ export function renderSystemDetails(s, highlightPlanetIds) {
             card.appendChild(tags);
         }
         if (p.resourceGeneration && Object.keys(p.resourceGeneration).length) {
-            const resBlock = document.createElement('div');
+            const resBlock = document.createElement('details');
             resBlock.className = 'planetResourceBlock';
 
-            const resTitle = document.createElement('div');
+            const summary = document.createElement('summary');
+            summary.className = 'planetResourceBlock__summary';
+
+            const resTitle = document.createElement('span');
             resTitle.className = 'planetResourceBlock__title';
             resTitle.textContent = 'Генерация ресурсов (в час)';
-            resBlock.appendChild(resTitle);
+            summary.appendChild(resTitle);
+
+            const preview = document.createElement('span');
+            preview.className = 'planetResourceBlock__preview';
+            const nonZeroResources = Object.entries(p.resourceGeneration)
+                .filter(([, rate]) => typeof rate === 'number' && Number.isFinite(rate) && rate > 0)
+                .sort(([, a], [, b]) => b - a);
+            if (nonZeroResources.length) {
+                const previewText = nonZeroResources
+                    .slice(0, 3)
+                    .map(([key, rate]) => `${i18n.translate(i18n.resources, key)} ${rate.toFixed(1)}`)
+                    .join(' · ');
+                preview.appendChild(document.createTextNode(previewText));
+                if (nonZeroResources.length > 3) {
+                    const more = document.createElement('span');
+                    more.className = 'planetResourceBlock__previewMore';
+                    more.textContent = ` +${nonZeroResources.length - 3}`;
+                    preview.appendChild(more);
+                }
+            } else {
+                preview.textContent = 'Нет генерации';
+                preview.classList.add('muted');
+            }
+            summary.appendChild(preview);
+
+            resBlock.appendChild(summary);
+
+            if (highlightSet.has(p.id)) {
+                resBlock.open = true;
+            }
 
             const grid = document.createElement('div');
             grid.className = 'planetResourceBlock__grid';
