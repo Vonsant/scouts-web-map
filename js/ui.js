@@ -136,6 +136,52 @@ export function renderSystemDetails(s, highlightPlanetIds) {
             });
             card.appendChild(tags);
         }
+        if (p.resourceGeneration && Object.keys(p.resourceGeneration).length) {
+            const resBlock = document.createElement('div');
+            resBlock.className = 'planetResourceBlock';
+
+            const resTitle = document.createElement('div');
+            resTitle.className = 'planetResourceBlock__title';
+            resTitle.textContent = 'Генерация ресурсов (в час)';
+            resBlock.appendChild(resTitle);
+
+            const grid = document.createElement('div');
+            grid.className = 'planetResourceBlock__grid';
+
+            let keysToRender = Object.keys(i18n.resources || {});
+            if (keysToRender.length) {
+                const extras = Object.keys(p.resourceGeneration).filter(key => !keysToRender.includes(key)).sort((a, b) => a.localeCompare(b));
+                keysToRender = keysToRender.concat(extras);
+            } else {
+                keysToRender = Object.keys(p.resourceGeneration).sort((a, b) => a.localeCompare(b));
+            }
+
+            keysToRender.forEach(key => {
+                const item = document.createElement('div');
+                item.className = 'planetResourceBlock__item';
+
+                const label = document.createElement('span');
+                label.className = 'planetResourceBlock__label';
+                label.textContent = i18n.translate(i18n.resources, key);
+
+                const value = document.createElement('span');
+                value.className = 'planetResourceBlock__value';
+                const rate = p.resourceGeneration[key];
+                if (typeof rate === 'number' && Number.isFinite(rate)) {
+                    value.textContent = rate.toFixed(1);
+                } else {
+                    value.textContent = '—';
+                    value.classList.add('muted');
+                }
+
+                item.appendChild(label);
+                item.appendChild(value);
+                grid.appendChild(item);
+            });
+
+            resBlock.appendChild(grid);
+            card.appendChild(resBlock);
+        }
         plGrid.appendChild(card);
     });
     blkPl.appendChild(plGrid);

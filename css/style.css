@@ -495,6 +495,47 @@ button.ghost:hover{
 .kv .k{color:var(--muted);opacity:.8}
 .kv .v{color:var(--fg);font-weight:500}
 
+.planetResourceBlock{
+  margin-top:10px;
+  padding-top:10px;
+  border-top:1px solid rgba(255,255,255,.08);
+}
+
+.planetResourceBlock__title{
+  font-size:12px;
+  letter-spacing:.02em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin-bottom:6px;
+}
+
+.planetResourceBlock__grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(160px, 1fr));
+  gap:6px 16px;
+}
+
+.planetResourceBlock__item{
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  font-size:12px;
+  line-height:1.4;
+}
+
+.planetResourceBlock__label{
+  color:var(--muted);
+  flex:1;
+}
+
+.planetResourceBlock__value{
+  color:var(--fg);
+  font-weight:600;
+  font-variant-numeric:tabular-nums;
+  text-align:right;
+  min-width:48px;
+}
+
 /* Enhanced double slider */
 .double-slider{position:relative;padding:10px 0}
 
